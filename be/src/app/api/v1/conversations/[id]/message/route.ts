@@ -45,7 +45,7 @@ export async function GET(
       where: {
         conversationId: id,
       },
-      orderBy: { createdAt: "asc" }, // Sắp xếp từ cũ đến mới
+      orderBy: { createdAt: "desc" }, // Sắp xếp từ cũ đến mới
       include: {
         sender: {
           select: {
