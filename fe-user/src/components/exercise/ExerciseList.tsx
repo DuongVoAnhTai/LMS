@@ -243,7 +243,7 @@ export default function ExerciseList() {
 
             const exerciseLinkHref = canManage
               ? `/teacher/skills/${skillId}/exercises/${exercise.id}/manage`
-              : `/exercises/skills/${skillId}/${exercise.id}`;
+              : `/skills/${skillId}/exercises/${exercise.id}`;
 
             return (
               <div
