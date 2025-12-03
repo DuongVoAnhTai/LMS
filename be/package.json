@@ -10,13 +10,17 @@
     "socket:dev": "tsx src/socket/server.ts"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@prisma/client": "^6.17.1",
     "@socket.io/redis-adapter": "^8.3.0",
+    "@supabase/supabase-js": "^2.84.0",
     "bcrypt": "^6.0.0",
     "cloudinary": "^2.7.0",
     "jsonwebtoken": "^9.0.2",
+    "mammoth": "^1.11.0",
     "next": "15.5.5",
     "nodemailer": "^7.0.10",
+    "pdf-parse": "^2.4.5",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "redis": "^5.8.3",
