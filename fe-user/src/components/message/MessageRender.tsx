@@ -21,7 +21,7 @@ function MessageRender({ messages, fetchedUser }: MessageRenderProps) {
             // ƯU TIÊN 1: Nếu là FILE, hoặc là IMAGE nhưng thực chất là PDF
             return (
               <a
-                href={msg.fileUrl!}
+                href={msg?.fileUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 download={msg.fileName}
@@ -47,7 +47,7 @@ function MessageRender({ messages, fetchedUser }: MessageRenderProps) {
           } else if (msg.contentType === "IMAGE") {
             // ƯU TIÊN 2: Nếu là IMAGE và không phải PDF
             return (
-              <a href={msg.fileUrl!} target="_blank" rel="noopener noreferrer">
+              <a href={msg?.fileUrl} target="_blank" rel="noopener noreferrer">
                 <div className="rounded-lg overflow-hidden shadow-lg max-w-xs sm:max-w-sm cursor-pointer border border-gray-200">
                   <Image
                     src={msg.fileUrl!}

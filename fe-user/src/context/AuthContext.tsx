@@ -38,6 +38,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const login = (token: string) => {
+    localStorage.setItem("token", token);
     const decoded = jwtDecode<UserPayload>(token);
     setUserPayload(decoded);
     fetchUser();
