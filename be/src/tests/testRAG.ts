@@ -7,6 +7,17 @@ export async function testRAG() {
     try {
         console.log('=== RAG System Test ===\n');
 
+        // Hiển thị provider configuration
+        console.log('Configuration:');
+        console.log(`- Embedding Provider: ${process.env.EMBEDDING_PROVIDER || 'gemini'}`);
+        console.log(`- Generation Provider: ${process.env.GENERATION_PROVIDER || 'gemini'}`);
+        if (process.env.EMBEDDING_PROVIDER === 'ollama') {
+            console.log(`- Ollama URL: ${process.env.OLLAMA_URL || 'http://localhost:11434'}`);
+            console.log(`- Embedding Model: ${process.env.OLLAMA_EMBEDDING_MODEL || 'nomic-embed-text'}`);
+            console.log(`- Generation Model: ${process.env.OLLAMA_GENERATION_MODEL || 'qwen3:8b'}`);
+        }
+        console.log();
+
         // 1. Test thêm documents
         console.log('1. Adding test documents...');
         await vectorStoreService.addDocument({

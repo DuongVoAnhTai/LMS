@@ -1,36 +1,33 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+import { IEmbeddingProvider } from './providers/IEmbeddingProvider';
+import { ProviderFactory } from './providers/ProviderFactory';
 
 export class EmbeddingService {
-    private model = genAI.getGenerativeModel({ model: 'text-embedding-004' });
+    private provider: IEmbeddingProvider | null = null;
+
+    /**
+     * Khởi tạo provider (lazy initialization)
+     */
+    private async getProvider(): Promise<IEmbeddingProvider> {
+        if (!this.provider) {
+            this.provider = await ProviderFactory.createEmbeddingProviderWithFallback();
+        }
+        return this.provider;
+    }
 
     /**
      * Tạo embedding cho một đoạn text
      */
     async createEmbedding(text: string): Promise<number[]> {
-        try {
-            const result = await this.model.embedContent(text);
-            return result.embedding.values;
-        } catch (error) {
-            console.error('Error creating embedding:', error);
-            throw error;
-        }
+        const provider = await this.getProvider();
+        return provider.createEmbedding(text);
     }
 
     /**
      * Tạo embedding cho nhiều đoạn text (batch)
      */
     async createEmbeddings(texts: string[]): Promise<number[][]> {
-        try {
-            const embeddings = await Promise.all(
-                texts.map(text => this.createEmbedding(text))
-            );
-            return embeddings;
-        } catch (error) {
-            console.error('Error creating batch embeddings:', error);
-            throw error;
-        }
+        const provider = await this.getProvider();
+        return provider.createEmbeddings(texts);
     }
 
     /**
@@ -41,6 +38,7 @@ export class EmbeddingService {
         chunkSize: number = 1000,
         overlap: number = 200
     ): string[] {
+        // Sử dụng implementation chung
         const chunks: string[] = [];
         let start = 0;
 

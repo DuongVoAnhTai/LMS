@@ -1,4 +1,3 @@
-// src/services/vectorStore.service.ts
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { embeddingService } from './embedding';
 
@@ -22,8 +21,8 @@ export class VectorStoreService {
 
     constructor() {
         this.supabase = createClient(
-            process.env.SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_KEY!
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!
         );
     }
 
@@ -39,15 +38,17 @@ export class VectorStoreService {
             const embeddings = await embeddingService.createEmbeddings(chunks);
 
             // Chuẩn bị data để insert
-            const records = chunks.map((chunk, index) => ({
-                conversation_id: doc.conversationId,
-                content: chunk,
-                embedding: JSON.stringify(embeddings[index]), // Supabase expects string for vector
-                source_type: doc.sourceType,
-                source_name: doc.sourceName,
-                chunk_index: index,
-                metadata: doc.metadata || {},
-            }));
+            const records = chunks.map((chunk, index) => {
+                return {
+                    conversation_id: doc.conversationId,
+                    content: chunk,
+                    embedding: embeddings[index],
+                    source_type: doc.sourceType,
+                    source_name: doc.sourceName,
+                    chunk_index: index,
+                    metadata: doc.metadata || {},
+                };
+            });
 
             // Insert vào database
             const { error } = await this.supabase
@@ -80,7 +81,7 @@ export class VectorStoreService {
 
             // Gọi function match_documents trong Supabase
             const { data, error } = await this.supabase.rpc('match_documents', {
-                query_embedding: JSON.stringify(queryEmbedding),
+                query_embedding: queryEmbedding,
                 match_conversation_id: conversationId,
                 match_count: limit,
             });

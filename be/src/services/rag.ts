@@ -1,12 +1,21 @@
 // src/services/rag.service.ts
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { IGenerationProvider } from './providers/IGenerationProvider';
+import { ProviderFactory } from './providers/ProviderFactory';
 import { vectorStoreService } from './vectorStore';
 import { fileProcessorService } from './fileProcessor';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-
 export class RAGService {
-    private model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+    private generationProvider: IGenerationProvider | null = null;
+
+    /**
+     * Khởi tạo generation provider (lazy initialization)
+     */
+    private async getGenerationProvider(): Promise<IGenerationProvider> {
+        if (!this.generationProvider) {
+            this.generationProvider = await ProviderFactory.createGenerationProviderWithFallback();
+        }
+        return this.generationProvider;
+    }
 
     /**
      * Xử lý và thêm file vào vector store
@@ -88,11 +97,11 @@ export class RAGService {
         }
 
         const contextParts = documents.map((doc, index) =>
-            `[Document ${index + 1}] (Relevance: ${(doc.similarity * 100).toFixed(1)}%)\n${doc.content}`
+            `[Tài liệu ${index + 1}] (Độ liên quan: ${(doc.similarity * 100).toFixed(1)}%)\n${doc.content}`
         );
 
         return `
-Relevant information from conversation history:
+Thông tin liên quan từ lịch sử hội thoại:
 
 ${contextParts.join('\n\n---\n\n')}
 `;
@@ -124,26 +133,17 @@ ${contextParts.join('\n\n---\n\n')}
                 prompt += context + '\n\n---\n\n';
             }
 
-            prompt += `User's current message: ${userMessage}\n\n`;
+            prompt += `Tin nhắn hiện tại của người dùng: ${userMessage}\n\n`;
 
             if (relevantDocs.length > 0) {
-                prompt += `Please answer based on the relevant information provided above. If the information doesn't fully answer the question, you can also use your general knowledge but mention that some information comes from the conversation history.`;
+                prompt += `Vui lòng trả lời bằng tiếng Việt dựa trên thông tin liên quan được cung cấp ở trên. Nếu thông tin không trả lời đầy đủ câu hỏi, bạn cũng có thể sử dụng kiến thức chung của mình nhưng hãy đề cập rằng một số thông tin đến từ lịch sử hội thoại.`;
             } else {
-                prompt += `No relevant context found in conversation history. Please answer based on your general knowledge.`;
+                prompt += `Không tìm thấy ngữ cảnh liên quan trong lịch sử hội thoại. Vui lòng trả lời bằng tiếng Việt dựa trên kiến thức chung của bạn.`;
             }
 
-            // Tạo chat với history nếu có
-            const chat = this.model.startChat({
-                history: conversationHistory?.map(msg => ({
-                    role: msg.role === 'USER' ? 'user' : 'model',
-                    parts: [{ text: msg.content }],
-                })) || [],
-            });
-
-            // Gửi message và nhận response
-            const result = await chat.sendMessage(prompt);
-            const response = result.response;
-            const aiReply = response.text();
+            // Sử dụng generation provider để tạo response
+            const provider = await this.getGenerationProvider();
+            const aiReply = await provider.generateWithHistory(prompt, conversationHistory);
 
             return aiReply;
         } catch (error) {
