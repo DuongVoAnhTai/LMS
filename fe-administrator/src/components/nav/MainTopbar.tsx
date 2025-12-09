@@ -90,7 +90,7 @@ const MainTopbar = ({ sidebarOpen, setSidebarOpen }: TopbarProps) => {
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
               type="text"
-              placeholder="Tìm kiếm kỹ năng, bài học..."
+              placeholder="Tìm kiếm ..."
               className="pl-10 pr-4 py-2 w-64 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>

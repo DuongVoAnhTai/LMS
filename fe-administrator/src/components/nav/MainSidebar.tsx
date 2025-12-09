@@ -2,15 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Award,
-  BookCheck,
-  BookOpen,
-  MessageSquare,
-  TrendingUp,
-  UserIcon,
-  X,
-} from "lucide-react";
+import { UserIcon, X } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+
+interface NavItem {
+  id: string;
+  label: string;
+  icon: LucideIcon;
+  path: string;
+}
 
 interface SidebarProps {
   sidebarOpen: boolean;
@@ -18,11 +18,7 @@ interface SidebarProps {
 }
 
 const navItems: NavItem[] = [
-  { id: "dashboard", label: "Dashboard", icon: TrendingUp, path: "/" },
-  { id: "skills", label: "Kỹ năng", icon: BookOpen, path: "/skills" },
-  { id: "chat", label: "Chat", icon: MessageSquare, path: "/messages" },
-  { id: "results", label: "Kết quả", icon: Award, path: "/results" },
-  { id: "profile", label: "Hồ sơ", icon: UserIcon, path: "/profile" },
+  { id: "students", label: "Quản lý học sinh", icon: UserIcon, path: "/students" }
 ];
 
 const MainSidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
@@ -30,15 +26,16 @@ const MainSidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
 
   return (
     <div
-      className={`fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-br from-blue-900 to-purple-900 transform 
-        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} 
-        transition-transform duration-300 ease-in-out 
-        lg:translate-x-0 lg:static lg:inset-0`}
+      className={`
+        fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-purple-700 to-indigo-800
+        transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
+        transition-transform duration-300 ease-in-out
+        lg:translate-x-0 lg:static lg:inset-0
+      `}
     >
-      {/* Sidebar */}
       {/* Header */}
-      <div className="flex items-center justify-between h-16 px-6 bg-black/20">
-        <h1 className="text-xl font-bold text-white">Education Platform</h1>
+      <div className="flex items-center justify-between px-6 py-4 text-white font-bold text-xl">
+        Education Admin
         <button
           onClick={() => setSidebarOpen(false)}
           className="lg:hidden text-white hover:text-gray-300"
@@ -48,27 +45,24 @@ const MainSidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
       </div>
 
       {/* Navigation */}
-      <nav className="mt-8 px-4">
+      <nav className="mt-4 space-y-1 px-4">
         {navItems.map((item) => {
           const active =
-            item.path === "/"
-              ? pathname === "/"
-              : pathname.startsWith(item.path);
+            item.path === "/" ? pathname === "/" : pathname.startsWith(item.path);
 
           return (
             <Link
-              key={item.id}
               href={item.path}
+              key={item.id}
               onClick={() => setSidebarOpen(false)}
-              className={`flex items-center w-full px-4 py-3 mt-2 rounded-lg transition-colors duration-200 
-                  ${
-                    active
-                      ? "bg-white/20 text-white"
-                      : "text-gray-300 hover:bg-white/10 hover:text-white"
-                  }`}
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors duration-200 ${
+                active
+                  ? "bg-white/20 text-white"
+                  : "text-gray-300 hover:bg-white/10 hover:text-white"
+              }`}
             >
-              <item.icon size={20} className="mr-3" />
-              {item.label}
+              <item.icon size={20} />
+              <span>{item.label}</span>
             </Link>
           );
         })}
