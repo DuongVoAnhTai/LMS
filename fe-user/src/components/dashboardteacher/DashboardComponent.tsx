@@ -1,10 +1,16 @@
-"use client"
+"use client";
 
 import { useEffect, useState } from "react";
-import { BookOpen, CheckCircle, FileText, Loader2, Star, TrendingUp } from "lucide-react";
+import {
+  BookOpen,
+  CheckCircle,
+  FileText,
+  Loader2,
+  Star,
+  TrendingUp,
+} from "lucide-react";
 import Link from "next/link";
 import * as dashboardService from "@/services/dashboardServices";
-
 
 const SummaryCard = ({
   title,
@@ -20,21 +26,25 @@ const SummaryCard = ({
   subtitle?: string;
 }) => (
   <div className="relative overflow-hidden bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-    <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-5`}></div>
+    <div
+      className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-5`}
+    ></div>
     <div className="relative p-6">
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
           <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
           <h3 className="text-3xl font-bold text-gray-900">{value}</h3>
-          {subtitle && (
-            <p className="text-xs text-gray-500 mt-1">{subtitle}</p>
-          )}
+          {subtitle && <p className="text-xs text-gray-500 mt-1">{subtitle}</p>}
         </div>
-        <div className={`p-3 rounded-xl bg-gradient-to-br ${gradient} shadow-md`}>
+        <div
+          className={`p-3 rounded-xl bg-gradient-to-br ${gradient} shadow-md`}
+        >
           {icon}
         </div>
       </div>
-      <div className={`h-1 w-full bg-gradient-to-r ${gradient} rounded-full opacity-20`}></div>
+      <div
+        className={`h-1 w-full bg-gradient-to-r ${gradient} rounded-full opacity-20`}
+      ></div>
     </div>
   </div>
 );
@@ -51,7 +61,7 @@ function DashboardComponentTeacher() {
       setLoading(true);
       setError(null);
 
-      const response = await dashboardService.getDashboardSummary();
+      const response = await dashboardService.getTeacherDashboardSummary();
 
       if (response.error) {
         setError(response.error);
@@ -80,7 +90,9 @@ function DashboardComponentTeacher() {
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 mb-4">
           <FileText className="text-red-600" size={32} />
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">Có lỗi xảy ra</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          Có lỗi xảy ra
+        </h3>
         <p className="text-red-600">{error}</p>
       </div>
     );
@@ -91,7 +103,9 @@ function DashboardComponentTeacher() {
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-xl p-8 text-white">
         <h1 className="text-3xl font-bold mb-2">Thống kê giảng dạy</h1>
-        <p className="text-blue-100">Tổng quan về hoạt động giảng dạy và tiến độ học tập của học sinh</p>
+        <p className="text-blue-100">
+          Tổng quan về hoạt động giảng dạy và tiến độ học tập của học sinh
+        </p>
       </div>
 
       {/* Summary Cards */}
@@ -104,7 +118,7 @@ function DashboardComponentTeacher() {
           subtitle="Đang được theo dõi"
         />
         <SummaryCard
-          title="Bài hoàn thành"
+          title="Lượt hoàn thành"
           value={summary?.totalCompletedCount?.toString() || "0"}
           icon={<CheckCircle size={28} className="text-white" />}
           gradient="from-green-500 to-green-600"
@@ -118,7 +132,7 @@ function DashboardComponentTeacher() {
           subtitle="Trong hệ thống"
         />
         <SummaryCard
-          title="Điểm trung bình"
+          title="Điểm trung bình toàn hệ thống"
           value={summary?.averageScore?.toFixed(1) || "0.0"}
           icon={<Star size={28} className="text-white" />}
           gradient="from-orange-500 to-orange-600"
@@ -135,7 +149,9 @@ function DashboardComponentTeacher() {
               <TrendingUp size={24} />
               Tiến độ học tập
             </h3>
-            <p className="text-blue-100 text-sm mt-1">Theo dõi tiến độ các kỹ năng</p>
+            <p className="text-blue-100 text-sm mt-1">
+              Theo dõi tiến độ các kỹ năng
+            </p>
           </div>
           <div className="p-6 space-y-4 max-h-[500px] overflow-y-auto">
             {learningProgress.length > 0 ? (
@@ -155,7 +171,7 @@ function DashboardComponentTeacher() {
                         {skill.progress || 0}%
                       </span>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <div className="relative w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
                         <div
@@ -165,13 +181,15 @@ function DashboardComponentTeacher() {
                           <div className="absolute inset-0 bg-white opacity-30 animate-pulse"></div>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center justify-between text-xs">
                         <span className="text-gray-600 font-medium">
-                          {skill.completedExercises}/{skill.exerciseCount} bài tập
+                          {skill.completedExercises}/{skill.exerciseCount} bài
+                          tập
                         </span>
                         <span className="text-gray-500">
-                          Còn lại: {skill.exerciseCount - skill.completedExercises}
+                          Còn lại:{" "}
+                          {skill.exerciseCount - skill.completedExercises}
                         </span>
                       </div>
                     </div>
@@ -194,7 +212,9 @@ function DashboardComponentTeacher() {
               <CheckCircle size={24} />
               Kết quả gần đây
             </h3>
-            <p className="text-green-100 text-sm mt-1">Bài tập học sinh hoàn thành gần đây</p>
+            <p className="text-green-100 text-sm mt-1">
+              Bài tập học sinh hoàn thành gần đây
+            </p>
           </div>
           <div className="p-6 space-y-4 max-h-[500px] overflow-y-auto">
             {recentResults.length > 0 ? (
@@ -208,24 +228,26 @@ function DashboardComponentTeacher() {
                       <h4 className="font-semibold text-gray-900 mb-1 group-hover:text-green-600 transition-colors">
                         {r.exerciseTitle}
                       </h4>
-                      <p className="text-sm text-gray-600 mb-2">{r.skillTitle}</p>
+                      <p className="text-sm text-gray-600 mb-2">
+                        {r.skillTitle}
+                      </p>
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
                           {new Date(r.submittedAt).toLocaleDateString("vi-VN", {
                             day: "2-digit",
                             month: "2-digit",
-                            year: "numeric"
+                            year: "numeric",
                           })}
                         </span>
                         <span className="text-xs text-gray-500">
                           {new Date(r.submittedAt).toLocaleTimeString("vi-VN", {
                             hour: "2-digit",
-                            minute: "2-digit"
+                            minute: "2-digit",
                           })}
                         </span>
                       </div>
                     </div>
-                    
+
                     <div className="ml-4 text-right">
                       <div className="flex flex-col items-end">
                         <span className="text-2xl font-bold text-green-600 mb-1">
@@ -235,7 +257,9 @@ function DashboardComponentTeacher() {
                           <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
                             <div
                               className="h-full bg-gradient-to-r from-green-500 to-teal-500 rounded-full"
-                              style={{ width: `${(r.score / r.totalPoints) * 100}%` }}
+                              style={{
+                                width: `${(r.score / r.totalPoints) * 100}%`,
+                              }}
                             ></div>
                           </div>
                           <span className="text-sm font-semibold text-gray-700">
