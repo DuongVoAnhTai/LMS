@@ -220,7 +220,7 @@ function DashboardComponentTeacher() {
             {recentResults.length > 0 ? (
               recentResults.map((r) => (
                 <div
-                  key={r.exerciseId}
+                  key={r.id}
                   className="group p-5 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-200 hover:border-green-300 hover:shadow-md transition-all duration-300"
                 >
                   <div className="flex items-start justify-between">

@@ -124,7 +124,8 @@ export async function GET(req: Request) {
 
     const formattedRecentResults = recentResults.map((s) => ({
       // exerciseId dùng làm key, có thể thêm userId để key duy nhất hơn
-      uniqueKey: `${s.exerciseId}-${s.userId}-${s.submittedAt}`,
+      // uniqueKey: `${s.exerciseId}-${s.userId}-${s.submittedAt}`,
+      id: s.id,
       exerciseId: s.exerciseId,
       exerciseTitle: `${s.user.fullName} - ${s.exercise.title}`, // Thêm tên user
       skillTitle: s.exercise.skill?.title || "N/A",

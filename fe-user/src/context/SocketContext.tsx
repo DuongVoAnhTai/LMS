@@ -27,15 +27,15 @@ export const useSocket = () => {
 };
 
 export const SocketProvider = ({ children }: { children: ReactNode }) => {
-  const { userPayload } = useAuth(); // Lấy userPayload từ context xác thực
+  const { userDetail } = useAuth(); // Lấy userDetail từ context xác thực
   const [socket, setSocket] = useState<typeof Socket | null>(null);
   const [isOnline, setIsOnline] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
 
-    if (!userPayload || !token) {
-      // Nếu không có userPayload hoặc token, ngắt kết nối cũ nếu có
+    if (!userDetail || !token) {
+      // Nếu không có userDetail hoặc token, ngắt kết nối cũ nếu có
       if (socket) {
         socket.disconnect();
         setSocket(null);
@@ -43,6 +43,9 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       }
       return;
     }
+
+    console.log("LOG", userDetail);
+    console.log("LOG", token);
 
     // Tạo instance socket mới
     const newSocket = io(
@@ -70,11 +73,11 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       console.error("Socket connection error:", err.message);
     });
 
-    // Cleanup khi component unmount hoặc userPayload thay đổi
+    // Cleanup khi component unmount hoặc userDetail thay đổi
     return () => {
       newSocket.disconnect();
     };
-  }, [userPayload]);
+  }, [userDetail]);
 
   return (
     <SocketContext.Provider value={{ socket, isOnline }}>
