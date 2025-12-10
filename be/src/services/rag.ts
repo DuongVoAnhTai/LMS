@@ -4,6 +4,31 @@ import { ProviderFactory } from './providers/ProviderFactory';
 import { vectorStoreService } from './vectorStore';
 import { fileProcessorService } from './fileProcessor';
 
+const SYSTEM_PROMPT = `
+Bạn đang hoạt động ở chế độ CONTEXT-LOCKED QA.
+
+QUY TẮC BẮT BUỘC:
+1. CHỈ được sử dụng thông tin trong <CONTEXT>.
+2. Mọi kiến thức ngoài <CONTEXT> mặc định là KHÔNG TỒN TẠI.
+3. Nếu không có đủ thông tin trong <CONTEXT> thì trả về đúng:
+"Không có thông tin được đề cập trong context."
+4. CẤM tuyệt đối:
+- Suy luận
+- Tổng hợp ngoài context
+- Dùng kiến thức huấn luyện
+- Trả lời một phần
+
+NGOẠI LỆ DUY NHẤT:
+Chỉ khi câu hỏi thuộc nhóm:
+- bạn là ai
+- bạn có thể làm gì
+- khả năng của bạn
+- bạn hỗ trợ gì
+thì mới được dùng kiến thức chung.
+
+Nếu vi phạm thì câu trả lời bị coi là SAI.
+`;
+
 export class RAGService {
     private generationProvider: IGenerationProvider | null = null;
 
@@ -15,6 +40,21 @@ export class RAGService {
             this.generationProvider = await ProviderFactory.createGenerationProviderWithFallback();
         }
         return this.generationProvider;
+    }
+
+    private isCapabilityQuestion(question: string): boolean {
+        const q = question.toLowerCase();
+
+        const patterns = [
+            'bạn là ai',
+            'bạn có thể làm gì',
+            'bạn làm được gì',
+            'bạn hỗ trợ gì',
+            'khả năng của bạn',
+            'bạn giúp được gì'
+        ];
+
+        return patterns.some(p => q.includes(p));
     }
 
     /**
@@ -96,15 +136,9 @@ export class RAGService {
             return '';
         }
 
-        const contextParts = documents.map((doc, index) =>
-            `[Tài liệu ${index + 1}] (Độ liên quan: ${(doc.similarity * 100).toFixed(1)}%)\n${doc.content}`
-        );
-
-        return `
-Thông tin liên quan từ lịch sử hội thoại:
-
-${contextParts.join('\n\n---\n\n')}
-`;
+        return documents
+            .map((doc, index) => `[Tài liệu ${index + 1}]\n${doc.content}`)
+            .join('\n\n---\n\n');
     }
 
     /**
@@ -116,36 +150,53 @@ ${contextParts.join('\n\n---\n\n')}
         conversationHistory?: Array<{ role: string; content: string }>
     ): Promise<string> {
         try {
-            // Tìm kiếm relevant documents
+
+            // CÂU HỎI NĂNG LỰC
+            if (this.isCapabilityQuestion(userMessage)) {
+                const provider = await this.getGenerationProvider();
+
+                return await provider.generateWithHistory(
+                    userMessage,
+                    [
+                        { role: 'system', content: 'Bạn là một trợ lý AI hữu ích. Hãy trả lời ngắn gọn, đúng trọng tâm.' },
+                        ...(conversationHistory || [])
+                    ]
+                );
+            }
+
+            // RAG BỊ KHÓA CONTEXT
             const relevantDocs = await vectorStoreService.searchSimilar(
                 conversationId,
                 userMessage,
-                5 // Lấy top 5 documents liên quan nhất
+                5
             );
 
-            // Tạo context từ relevant documents
             const context = this.buildContext(relevantDocs);
 
-            // Tạo prompt với context
-            let prompt = '';
+            const userPrompt = `
+<CONTEXT>
+${context || 'NONE'}
+</CONTEXT>
 
-            if (context) {
-                prompt += context + '\n\n---\n\n';
-            }
+<QUESTION>
+${userMessage}
+</QUESTION>
 
-            prompt += `Tin nhắn hiện tại của người dùng: ${userMessage}\n\n`;
+Hãy trả lời theo đúng quy tắc system prompt.
+`;
 
-            if (relevantDocs.length > 0) {
-                prompt += `Vui lòng trả lời bằng tiếng Việt dựa trên thông tin liên quan được cung cấp ở trên. Nếu thông tin không trả lời đầy đủ câu hỏi, bạn cũng có thể sử dụng kiến thức chung của mình nhưng hãy đề cập rằng một số thông tin đến từ lịch sử hội thoại.`;
-            } else {
-                prompt += `Không tìm thấy ngữ cảnh liên quan trong lịch sử hội thoại. Vui lòng trả lời bằng tiếng Việt dựa trên kiến thức chung của bạn.`;
-            }
-
-            // Sử dụng generation provider để tạo response
             const provider = await this.getGenerationProvider();
-            const aiReply = await provider.generateWithHistory(prompt, conversationHistory);
 
-            return aiReply;
+            const aiReply = await provider.generateWithHistory(
+                userPrompt,
+                [
+                    { role: 'system', content: SYSTEM_PROMPT },
+                    ...(conversationHistory || []).filter(m => m.role !== 'system')
+                ]
+            );
+
+            return aiReply.trim();
+
         } catch (error) {
             console.error('Error generating AI reply:', error);
             throw error;

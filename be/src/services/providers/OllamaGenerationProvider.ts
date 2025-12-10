@@ -25,10 +25,16 @@ interface OllamaGenerateResponse {
 export class OllamaGenerationProvider implements IGenerationProvider {
     private baseUrl: string;
     private model: string;
+    private timeout: number;
 
-    constructor(baseUrl: string = 'http://localhost:11434', model: string = 'qwen3:8b') {
+    constructor(
+        baseUrl: string = 'http://localhost:11434',
+        model: string = 'qwen3:8b',
+        timeout: number = 300000 // 5 phút timeout cho generation (lâu hơn embedding)
+    ) {
         this.baseUrl = baseUrl;
         this.model = model;
+        this.timeout = timeout;
     }
 
     /**
@@ -36,6 +42,9 @@ export class OllamaGenerationProvider implements IGenerationProvider {
      */
     async generateResponse(prompt: string): Promise<string> {
         try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+
             const response = await fetch(`${this.baseUrl}/api/generate`, {
                 method: 'POST',
                 headers: {
@@ -46,7 +55,10 @@ export class OllamaGenerationProvider implements IGenerationProvider {
                     prompt: prompt,
                     stream: false,
                 } as OllamaGenerateRequest),
+                signal: controller.signal,
             });
+
+            clearTimeout(timeoutId);
 
             if (!response.ok) {
                 throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
@@ -55,6 +67,9 @@ export class OllamaGenerationProvider implements IGenerationProvider {
             const data: OllamaGenerateResponse = await response.json();
             return data.response || '';
         } catch (error) {
+            if (error instanceof Error && error.name === 'AbortError') {
+                throw new Error(`Ollama generation request timed out after ${this.timeout}ms`);
+            }
             console.error('Error generating response with Ollama:', error);
             throw error;
         }
@@ -68,6 +83,9 @@ export class OllamaGenerationProvider implements IGenerationProvider {
         history?: Array<{ role: string; content: string }>
     ): Promise<string> {
         try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+
             // Chuyển đổi history sang format của Ollama
             const messages: OllamaMessage[] = [];
 
@@ -97,7 +115,10 @@ export class OllamaGenerationProvider implements IGenerationProvider {
                     messages: messages,
                     stream: false,
                 } as OllamaGenerateRequest),
+                signal: controller.signal,
             });
+
+            clearTimeout(timeoutId);
 
             if (!response.ok) {
                 throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
@@ -106,6 +127,9 @@ export class OllamaGenerationProvider implements IGenerationProvider {
             const data: OllamaGenerateResponse = await response.json();
             return data.message?.content || '';
         } catch (error) {
+            if (error instanceof Error && error.name === 'AbortError') {
+                throw new Error(`Ollama chat request timed out after ${this.timeout}ms`);
+            }
             console.error('Error generating response with history:', error);
             throw error;
         }

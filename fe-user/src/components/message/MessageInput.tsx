@@ -63,6 +63,7 @@ function MessageInput({
             ref={fileInputRef}
             type="file"
             hidden
+            accept="image/*,.pdf,.doc,.docx,.txt"
             onChange={handlePickFile}
           />
 

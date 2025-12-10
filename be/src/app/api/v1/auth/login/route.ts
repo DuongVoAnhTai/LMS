@@ -8,7 +8,6 @@ const JWT_SECRET = process.env.JWT_SECRET || "supersecret";
 
 export async function POST(req: Request) {
   try {
-    testRAG();
     const { emailOrUsername, password } = await req.json();
     const errors: ValidationErrorLogin = {};
 

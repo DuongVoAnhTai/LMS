@@ -35,36 +35,33 @@ export class EmbeddingService {
      */
     chunkText(
         text: string,
-        chunkSize: number = 1000,
+        chunkSize: number = 2000,
         overlap: number = 200
     ): string[] {
-        // Sử dụng implementation chung
         const chunks: string[] = [];
         let start = 0;
 
         // Loại bỏ whitespace dư thừa
-        text = text.replace(/\s+/g, ' ').trim();
+        text = text.replace(/[ \t]+/g, ' ').trim();
+
+        if (text.length === 0) {
+            return chunks;
+        }
 
         while (start < text.length) {
-            let end = start + chunkSize;
+            let end = Math.min(start + chunkSize, text.length);
 
             // Nếu không phải chunk cuối, tìm điểm ngắt tự nhiên
             if (end < text.length) {
-                // Tìm dấu câu gần nhất
-                const lastPeriod = text.lastIndexOf('.', end);
-                const lastQuestion = text.lastIndexOf('?', end);
-                const lastExclamation = text.lastIndexOf('!', end);
-                const lastNewline = text.lastIndexOf('\n', end);
+                const searchText = text.slice(start, end);
+                const lastPeriod = searchText.lastIndexOf('.');
+                const lastQuestion = searchText.lastIndexOf('?');
+                const lastExclamation = searchText.lastIndexOf('!');
 
-                const breakPoint = Math.max(
-                    lastPeriod,
-                    lastQuestion,
-                    lastExclamation,
-                    lastNewline
-                );
+                const breakPoint = Math.max(lastPeriod, lastQuestion, lastExclamation);
 
-                if (breakPoint > start) {
-                    end = breakPoint + 1;
+                if (breakPoint > (end - start) * 0.5) {
+                    end = start + breakPoint + 1;
                 }
             }
 
@@ -73,7 +70,8 @@ export class EmbeddingService {
                 chunks.push(chunk);
             }
 
-            start = end - overlap;
+            const nextStart = end - overlap;
+            start = nextStart > start ? nextStart : end;
         }
 
         return chunks;

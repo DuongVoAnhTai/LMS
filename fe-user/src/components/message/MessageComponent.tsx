@@ -167,6 +167,9 @@ function MessageComponent({ conversationId }: MessageComponentProps) {
     scrollToBottom();
   }, [messages, typingUsers]);
 
+  // Các định dạng file hỗ trợ RAG
+  const RAG_SUPPORTED_FORMATS = ["pdf", "doc", "docx", "txt"];
+
   // --- GỬI TIN NHẮN ---
   const handleSendMessage = async () => {
     if ((!messageInput.trim() && !stagedFile) || isSending) return;
@@ -192,6 +195,16 @@ function MessageComponent({ conversationId }: MessageComponentProps) {
 
       // 2. Chuẩn bị payload tin nhắn
       if (uploadResult && socket) {
+        // Lấy tên file gốc (không có extension) và extension riêng
+        const originalName = fileToSend?.name || uploadResult.original_filename;
+        const fileExtension = uploadResult.format?.toLowerCase();
+
+        // Loại bỏ extension nếu đã có trong tên file
+        const fileNameWithoutExt = originalName.replace(
+          new RegExp(`\\.${fileExtension}$`, 'i'),
+          ''
+        );
+
         const filePayload = {
           conversationId,
           contentType:
@@ -200,18 +213,42 @@ function MessageComponent({ conversationId }: MessageComponentProps) {
           content:
             textToSend && !fileToSend
               ? textToSend
-              : `Tệp đính kèm: ${uploadResult.original_filename}`,
+              : `Tệp đính kèm: ${originalName}`,
           fileUrl: uploadResult.secure_url,
-          fileName: fileToSend?.name,
+          fileName: fileNameWithoutExt, // Gửi tên không có extension
           fileSize: uploadResult.bytes,
-          fileFormat: uploadResult.format,
+          fileFormat: fileExtension,
         };
         socket.emit("send-message", filePayload, (ack: any) => {
           if (ack.error) toast.error(`Lỗi gửi tệp: ${ack.error}`);
         });
+
+        // 3. Xử lý RAG cho các file document (pdf, doc, docx, txt)
+        if (uploadResult) {
+          const fileFormat = uploadResult.format?.toLowerCase();
+          if (fileFormat && RAG_SUPPORTED_FORMATS.includes(fileFormat)) {
+            // Gọi API backend để xử lý file cho RAG (chạy ngầm, không block UI)
+            conversationService
+              .processFileForRAG(conversationId, {
+                fileUrl: uploadResult.secure_url,
+                fileName: originalName, // Sử dụng tên gốc có extension
+                fileFormat: fileFormat,
+              })
+              .then((result) => {
+                if (result.error) {
+                  console.error("RAG processing error:", result.error);
+                } else {
+                  console.log("File processed for RAG:", result.message);
+                }
+              })
+              .catch((err) => {
+                console.error("RAG processing failed:", err);
+              });
+          }
+        }
       }
 
-      // 3. Gửi tin nhắn qua socket
+      // 4. Gửi tin nhắn qua socket
       if (textToSend && socket) {
         const textPayload = {
           conversationId,

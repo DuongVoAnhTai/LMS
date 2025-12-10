@@ -7,10 +7,26 @@ interface OllamaEmbeddingResponse {
 export class OllamaEmbeddingProvider implements IEmbeddingProvider {
     private baseUrl: string;
     private model: string;
+    private timeout: number;
+    private delayBetweenCalls: number;
 
-    constructor(baseUrl: string = 'http://localhost:11434', model: string = 'nomic-embed-text') {
+    constructor(
+        baseUrl: string = 'http://localhost:11434',
+        model: string = 'nomic-embed-text',
+        timeout: number = 120000, // 2 phút timeout
+        delayBetweenCalls: number = 100 // 100ms delay giữa các calls
+    ) {
         this.baseUrl = baseUrl;
         this.model = model;
+        this.timeout = timeout;
+        this.delayBetweenCalls = delayBetweenCalls;
+    }
+
+    /**
+     * Helper để delay
+     */
+    private delay(ms: number): Promise<void> {
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
 
     /**
@@ -18,6 +34,9 @@ export class OllamaEmbeddingProvider implements IEmbeddingProvider {
      */
     async createEmbedding(text: string): Promise<number[]> {
         try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+
             const response = await fetch(`${this.baseUrl}/api/embeddings`, {
                 method: 'POST',
                 headers: {
@@ -27,7 +46,10 @@ export class OllamaEmbeddingProvider implements IEmbeddingProvider {
                     model: this.model,
                     prompt: text,
                 }),
+                signal: controller.signal,
             });
+
+            clearTimeout(timeoutId);
 
             if (!response.ok) {
                 throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
@@ -36,6 +58,9 @@ export class OllamaEmbeddingProvider implements IEmbeddingProvider {
             const data: OllamaEmbeddingResponse = await response.json();
             return data.embedding;
         } catch (error) {
+            if (error instanceof Error && error.name === 'AbortError') {
+                throw new Error(`Ollama embedding request timed out after ${this.timeout}ms`);
+            }
             console.error('Error creating embedding with Ollama:', error);
             throw error;
         }
@@ -43,16 +68,28 @@ export class OllamaEmbeddingProvider implements IEmbeddingProvider {
 
     /**
      * Tạo embedding cho nhiều đoạn text (batch)
-     * Ollama không có rate limit nên có thể gọi song song
+     * Gọi tuần tự với delay để tránh quá tải Ollama
      */
     async createEmbeddings(texts: string[]): Promise<number[][]> {
         try {
-            console.log(`Creating ${texts.length} embeddings with Ollama...`);
+            console.log(`Creating ${texts.length} embeddings with Ollama (sequential with ${this.delayBetweenCalls}ms delay)...`);
 
-            // Gọi song song để tăng tốc độ
-            const embeddings = await Promise.all(
-                texts.map(text => this.createEmbedding(text))
-            );
+            const embeddings: number[][] = [];
+
+            for (let i = 0; i < texts.length; i++) {
+                // Log tiến trình mỗi 10 chunks
+                if (i % 10 === 0) {
+                    console.log(`  Processing chunk ${i + 1}/${texts.length}...`);
+                }
+
+                const embedding = await this.createEmbedding(texts[i]);
+                embeddings.push(embedding);
+
+                // Delay giữa các calls (trừ call cuối)
+                if (i < texts.length - 1 && this.delayBetweenCalls > 0) {
+                    await this.delay(this.delayBetweenCalls);
+                }
+            }
 
             console.log(`✓ Created ${embeddings.length} embeddings successfully`);
             return embeddings;

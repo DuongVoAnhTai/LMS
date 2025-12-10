@@ -1,6 +1,6 @@
 // src/services/fileProcessor.service.ts
-import { PDFParse } from 'pdf-parse';
 import mammoth from 'mammoth';
+import { PDFParse } from 'pdf-parse';
 
 export class FileProcessorService {
     /**
@@ -8,11 +8,28 @@ export class FileProcessorService {
      */
     async processPDF(buffer: Buffer): Promise<string> {
         try {
-            const data = await new PDFParse(buffer);
-            return (await data.getText()).text;
+            // Sử dụng pdf-parse để extract text từ PDF
+            const pdfParser = new PDFParse({ data: buffer });
+            const result = await pdfParser.getText();
+
+            const text = result.text.trim();
+
+            // Kiểm tra xem có text được extract không
+            if (!text || text.length === 0) {
+                console.warn('No text content extracted from PDF');
+                throw new Error('No text content extracted from PDF');
+            }
+
+            console.log(`Successfully extracted ${text.length} characters from PDF`);
+            console.log(`PDF info: ${result.total} pages`);
+
+            // Cleanup
+            await pdfParser.destroy();
+
+            return text;
         } catch (error) {
             console.error('Error processing PDF:', error);
-            throw new Error('Failed to process PDF file');
+            throw new Error(`Failed to process PDF file: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
 

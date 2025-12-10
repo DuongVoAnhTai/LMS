@@ -151,79 +151,76 @@ export const handleSendMessage = async (
         console.error('Error storing text message:', err);
       });
     }
-    // Emit typing indicator
-    // io.to(conversationId).emit('ai-typing', { isTyping: true });
-
     // Gửi ack cho người dùng ngay, không cần chờ AI
     ack({ success: true, message });
 
-    // Xử lý AI response
-    // if (conversation.allowAi) {
-    //   processAiResponse(
-    //     conversationId,
-    //     content,
-    //     io,
-    //     contentType,
-    //     fileUrl,
-    //     fileName,
-    //     fileSize,
-    //     fileFormat
-    //   );
-    // }
+    // Xử lý AI response nếu conversation cho phép AI
+    if (conversation.allowAi) {
+      // Emit typing indicator
+      io.to(conversationId).emit('ai-typing', { isTyping: true });
 
-    // Lấy conversation history (tuỳ chọn - để cải thiện context)
-    const recentMessages = await prisma.messages.findMany({
-      where: { conversationId },
-      orderBy: { createdAt: 'desc' },
-      take: 10, // Lấy 10 tin nhắn gần nhất
-      select: {
-        senderType: true,
-        content: true,
-      },
-    });
+      try {
+        // Lấy conversation history (tuỳ chọn - để cải thiện context)
+        const recentMessages = await prisma.messages.findMany({
+          where: { conversationId },
+          orderBy: { createdAt: 'desc' },
+          take: 10, // Lấy 10 tin nhắn gần nhất
+          select: {
+            senderType: true,
+            content: true,
+          },
+        });
 
-    const conversationHistory = recentMessages
-      .reverse()
-      .filter((msg): msg is { senderType: 'USER' | 'AI'; content: string } => msg.content !== null)
-      .map(msg => ({
-        role: msg.senderType === 'USER' ? 'USER' : 'AI',
-        content: msg.content,
-      }));
-    // Tạo AI reply sử dụng RAG
-    const aiContent = await ragService.generateReply(
-      conversationId,
-      content,
-      conversationHistory
-    );
-    // Lưu tin nhắn AI
-    const aiMessage = await prisma.messages.create({
-      data: {
-        conversationId,
-        senderType: 'AI',
-        content: aiContent,
-        contentType: 'TEXT',
-      },
-      include: {
-        sender: {
-          select: { id: true, username: true, avatarUrl: true },
-        },
-      },
-    });
+        const conversationHistory = recentMessages
+          .reverse()
+          .filter((msg): msg is { senderType: 'USER' | 'AI'; content: string } => msg.content !== null)
+          .map(msg => ({
+            role: msg.senderType === 'USER' ? 'USER' : 'AI',
+            content: msg.content,
+          }));
 
-    // Stop typing và gửi tin nhắn AI
-    // io.to(conversationId).emit('ai-typing', { isTyping: false });
-    // io.to(conversationId).emit('new-message', aiMessage);
+        // Tạo AI reply sử dụng RAG
+        const aiContent = await ragService.generateReply(
+          conversationId,
+          content,
+          conversationHistory
+        );
 
-    // Lưu AI reply vào vector store (background)
-    ragService.storeTextMessage(
-      conversationId,
-      aiContent,
-      aiMessage.id
-    ).catch(err => {
-      console.error('Error storing AI message:', err);
-    });
+        // Lưu tin nhắn AI
+        const aiMessage = await prisma.messages.create({
+          data: {
+            conversationId,
+            senderType: 'AI',
+            content: aiContent,
+            contentType: 'TEXT',
+          },
+          include: {
+            sender: {
+              select: { id: true, username: true, avatarUrl: true },
+            },
+          },
+        });
 
-    ack({ success: true, message });
+        // Stop typing và gửi tin nhắn AI
+        io.to(conversationId).emit('ai-typing', { isTyping: false });
+        io.to(conversationId).emit('new-message', aiMessage);
+
+        // Lưu AI reply vào vector store (background)
+        ragService.storeTextMessage(
+          conversationId,
+          aiContent,
+          aiMessage.id
+        ).catch(err => {
+          console.error('Error storing AI message:', err);
+        });
+      } catch (aiError) {
+        console.error('AI response error:', aiError);
+        io.to(conversationId).emit('ai-typing', { isTyping: false });
+        io.to(conversationId).emit('ai-error', {
+          message: 'AI is currently unavailable',
+        });
+      }
+    }
   } catch (error: any) {
     console.error(`Send message error for user ${userId}:`, error.message);
     ack({ error: `Failed to send message: ${error.message}` });

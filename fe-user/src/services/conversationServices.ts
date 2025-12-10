@@ -71,3 +71,21 @@ export const getMessages = async (
     return { error: "Failed to fetch messages" };
   }
 };
+
+export const processFileForRAG = async (
+  conversationId: string,
+  fileData: { fileUrl: string; fileName: string; fileFormat: string }
+) => {
+  try {
+    const res = await httpRequest.post(
+      `conversations/${conversationId}/rag/process-file`,
+      fileData
+    );
+    return res; // { success: true, message: "..." }
+  } catch (error: any) {
+    if (error.response?.data?.error) {
+      return { error: error.response.data.error };
+    }
+    return { error: "Failed to process file for RAG" };
+  }
+};

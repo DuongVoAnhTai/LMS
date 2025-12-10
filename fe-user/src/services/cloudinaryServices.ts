@@ -34,7 +34,7 @@ export const uploadFile = async (
 
     // 'auto' cho phép Cloudinary tự nhận diện loại file (image, video, raw)
     formData.append("resource_type", "auto");
-    
+
     // Upload to Cloudinary
     const response = await fetch(
       `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`,
