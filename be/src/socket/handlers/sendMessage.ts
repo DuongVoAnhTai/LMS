@@ -141,49 +141,37 @@ export const handleSendMessage = async (
       }
     }
 
-    // Lưu text message vào vector store (background task)
-    if (contentType === 'TEXT' && content.length > 20) {
-      ragService.storeTextMessage(
-        conversationId,
-        content,
-        userId
-      ).catch(err => {
-        console.error('Error storing text message:', err);
-      });
-    }
-    // Gửi ack cho người dùng ngay, không cần chờ AI
     ack({ success: true, message });
 
-    // Xử lý AI response nếu conversation cho phép AI
+    // Xử lý AI response conversation
     if (conversation.allowAi) {
       // Emit typing indicator
       io.to(conversationId).emit('ai-typing', { isTyping: true });
 
       try {
-        // Lấy conversation history (tuỳ chọn - để cải thiện context)
-        const recentMessages = await prisma.messages.findMany({
-          where: { conversationId },
-          orderBy: { createdAt: 'desc' },
-          take: 10, // Lấy 10 tin nhắn gần nhất
-          select: {
-            senderType: true,
-            content: true,
-          },
-        });
+        // const recentMessages = await prisma.messages.findMany({
+        //   where: { conversationId },
+        //   orderBy: { createdAt: 'desc' },
+        //   take: 10,
+        //   select: {
+        //     senderType: true,
+        //     content: true,
+        //   },
+        // });
 
-        const conversationHistory = recentMessages
-          .reverse()
-          .filter((msg): msg is { senderType: 'USER' | 'AI'; content: string } => msg.content !== null)
-          .map(msg => ({
-            role: msg.senderType === 'USER' ? 'USER' : 'AI',
-            content: msg.content,
-          }));
+        // const conversationHistory = recentMessages
+        //   .reverse()
+        //   .filter((msg): msg is { senderType: 'USER' | 'AI'; content: string } => msg.content !== null)
+        //   .map(msg => ({
+        //     role: msg.senderType === 'USER' ? 'USER' : 'AI',
+        //     content: msg.content,
+        //   }));
 
         // Tạo AI reply sử dụng RAG
         const aiContent = await ragService.generateReply(
           conversationId,
           content,
-          conversationHistory
+          // conversationHistory
         );
 
         // Lưu tin nhắn AI
@@ -205,14 +193,6 @@ export const handleSendMessage = async (
         io.to(conversationId).emit('ai-typing', { isTyping: false });
         io.to(conversationId).emit('new-message', aiMessage);
 
-        // Lưu AI reply vào vector store (background)
-        ragService.storeTextMessage(
-          conversationId,
-          aiContent,
-          aiMessage.id
-        ).catch(err => {
-          console.error('Error storing AI message:', err);
-        });
       } catch (aiError) {
         console.error('AI response error:', aiError);
         io.to(conversationId).emit('ai-typing', { isTyping: false });

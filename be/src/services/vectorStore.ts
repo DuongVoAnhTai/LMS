@@ -31,11 +31,16 @@ export class VectorStoreService {
      */
     async addDocument(doc: VectorDocument): Promise<void> {
         try {
+            console.log(`[VectorStore] Adding document for conversation: ${doc.conversationId}`);
+            console.log(`[VectorStore] Content length: ${doc.content.length}, Source: ${doc.sourceType}/${doc.sourceName}`);
+
             // Chia text thành chunks
             const chunks = embeddingService.chunkText(doc.content);
+            console.log(`[VectorStore] Split into ${chunks.length} chunks`);
 
             // Tạo embeddings cho tất cả chunks
             const embeddings = await embeddingService.createEmbeddings(chunks);
+            console.log(`[VectorStore] Created ${embeddings.length} embeddings`);
 
             // Chuẩn bị data để insert
             const records = chunks.map((chunk, index) => {
@@ -51,18 +56,19 @@ export class VectorStoreService {
             });
 
             // Insert vào database
+            console.log(`[VectorStore] Inserting ${records.length} records into database...`);
             const { error } = await this.supabase
                 .from('vector_embeddings')
                 .insert(records);
 
             if (error) {
-                console.error('Supabase insert error:', error);
+                console.error('[VectorStore] Supabase insert error:', error);
                 throw error;
             }
 
-            console.log(`Added ${chunks.length} chunks to vector store`);
+            console.log(`[VectorStore] Successfully added ${chunks.length} chunks to vector store`);
         } catch (error) {
-            console.error('Error adding document to vector store:', error);
+            console.error('[VectorStore] Error adding document to vector store:', error);
             throw error;
         }
     }
@@ -76,10 +82,14 @@ export class VectorStoreService {
         limit: number = 5
     ): Promise<SearchResult[]> {
         try {
+            console.log(`[VectorStore] Creating embedding for query: "${query.substring(0, 100)}..."`);
+
             // Tạo embedding cho query
             const queryEmbedding = await embeddingService.createEmbedding(query);
+            console.log(`[VectorStore] Embedding created with dimension: ${queryEmbedding.length}`);
 
             // Gọi function match_documents trong Supabase
+            console.log(`[VectorStore] Calling match_documents RPC for conversation: ${conversationId}, limit: ${limit}`);
             const { data, error } = await this.supabase.rpc('match_documents', {
                 query_embedding: queryEmbedding,
                 match_conversation_id: conversationId,
@@ -87,13 +97,22 @@ export class VectorStoreService {
             });
 
             if (error) {
-                console.error('Supabase search error:', error);
+                console.error('[VectorStore] Supabase search error:', error);
                 throw error;
+            }
+
+            console.log(`[VectorStore] RPC returned ${data?.length || 0} results`);
+            if (data && data.length > 0) {
+                console.log('[VectorStore] Sample result:', {
+                    id: data[0].id,
+                    similarity: data[0].similarity,
+                    contentLength: data[0].content?.length
+                });
             }
 
             return data || [];
         } catch (error) {
-            console.error('Error searching similar documents:', error);
+            console.error('[VectorStore] Error searching similar documents:', error);
             throw error;
         }
     }

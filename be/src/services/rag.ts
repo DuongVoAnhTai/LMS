@@ -9,14 +9,9 @@ Bạn đang hoạt động ở chế độ CONTEXT-LOCKED QA.
 
 QUY TẮC BẮT BUỘC:
 1. CHỈ được sử dụng thông tin trong <CONTEXT>.
-2. Mọi kiến thức ngoài <CONTEXT> mặc định là KHÔNG TỒN TẠI.
-3. Nếu không có đủ thông tin trong <CONTEXT> thì trả về đúng:
+2. Nếu không có đủ thông tin trong <CONTEXT> thì trả về đúng:
 "Không có thông tin được đề cập trong context."
-4. CẤM tuyệt đối:
-- Suy luận
-- Tổng hợp ngoài context
-- Dùng kiến thức huấn luyện
-- Trả lời một phần
+3. Luôn trả lời bằng tiếng Việt.
 
 NGOẠI LỆ DUY NHẤT:
 Chỉ khi câu hỏi thuộc nhóm:
@@ -24,7 +19,7 @@ Chỉ khi câu hỏi thuộc nhóm:
 - bạn có thể làm gì
 - khả năng của bạn
 - bạn hỗ trợ gì
-thì mới được dùng kiến thức chung.
+thì mới được dùng kiến thức chung bằng tiếng Việt.
 
 Nếu vi phạm thì câu trả lời bị coi là SAI.
 `;
@@ -165,11 +160,25 @@ export class RAGService {
             }
 
             // RAG BỊ KHÓA CONTEXT
+            console.log(`[RAG] Searching for relevant documents in conversation: ${conversationId}`);
+            console.log(`[RAG] User query: ${userMessage}`);
+
             const relevantDocs = await vectorStoreService.searchSimilar(
                 conversationId,
                 userMessage,
                 5
             );
+
+            console.log(`[RAG] Found ${relevantDocs.length} relevant documents`);
+            if (relevantDocs.length > 0) {
+                console.log('[RAG] Top documents:', relevantDocs.map((d, i) => ({
+                    index: i + 1,
+                    similarity: d.similarity,
+                    contentPreview: d.content.substring(0, 100) + '...'
+                })));
+            } else {
+                console.log('[RAG] No relevant documents found - AI will respond with "no context" message');
+            }
 
             const context = this.buildContext(relevantDocs);
 
@@ -185,6 +194,8 @@ ${userMessage}
 Hãy trả lời theo đúng quy tắc system prompt.
 `;
 
+            console.log(`[RAG] Context length: ${context.length} characters`);
+
             const provider = await this.getGenerationProvider();
 
             const aiReply = await provider.generateWithHistory(
@@ -194,6 +205,8 @@ Hãy trả lời theo đúng quy tắc system prompt.
                     ...(conversationHistory || []).filter(m => m.role !== 'system')
                 ]
             );
+
+            console.log(`[RAG] Generated reply length: ${aiReply.length} characters`);
 
             return aiReply.trim();
 

@@ -209,11 +209,8 @@ function MessageComponent({ conversationId }: MessageComponentProps) {
           conversationId,
           contentType:
             uploadResult.resource_type === "image" ? "IMAGE" : "FILE",
-          // Gửi kèm text nếu chỉ gửi file và không có text riêng
-          content:
-            textToSend && !fileToSend
-              ? textToSend
-              : `Tệp đính kèm: ${originalName}`,
+          // Nếu có text, gửi kèm text; nếu không thì gửi tên file
+          content: textToSend || `Tệp đính kèm: ${originalName}`,
           fileUrl: uploadResult.secure_url,
           fileName: fileNameWithoutExt, // Gửi tên không có extension
           fileSize: uploadResult.bytes,
@@ -222,34 +219,10 @@ function MessageComponent({ conversationId }: MessageComponentProps) {
         socket.emit("send-message", filePayload, (ack: any) => {
           if (ack.error) toast.error(`Lỗi gửi tệp: ${ack.error}`);
         });
-
-        // 3. Xử lý RAG cho các file document (pdf, doc, docx, txt)
-        if (uploadResult) {
-          const fileFormat = uploadResult.format?.toLowerCase();
-          if (fileFormat && RAG_SUPPORTED_FORMATS.includes(fileFormat)) {
-            // Gọi API backend để xử lý file cho RAG (chạy ngầm, không block UI)
-            conversationService
-              .processFileForRAG(conversationId, {
-                fileUrl: uploadResult.secure_url,
-                fileName: originalName, // Sử dụng tên gốc có extension
-                fileFormat: fileFormat,
-              })
-              .then((result) => {
-                if (result.error) {
-                  console.error("RAG processing error:", result.error);
-                } else {
-                  console.log("File processed for RAG:", result.message);
-                }
-              })
-              .catch((err) => {
-                console.error("RAG processing failed:", err);
-              });
-          }
-        }
       }
 
-      // 4. Gửi tin nhắn qua socket
-      if (textToSend && socket) {
+      // 3. Gửi tin nhắn text riêng (chỉ khi không có file đính kèm)
+      if (textToSend && !fileToSend && socket) {
         const textPayload = {
           conversationId,
           contentType: "TEXT",
