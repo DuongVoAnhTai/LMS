@@ -18,7 +18,7 @@ interface SidebarProps {
 }
 
 const navItems: NavItem[] = [
-  { id: "students", label: "Quản lý học sinh", icon: UserIcon, path: "/students" }
+  { id: "students", label: "Quản lý tài khoản", icon: UserIcon, path: "/students" }
 ];
 
 const MainSidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {

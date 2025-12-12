@@ -104,7 +104,7 @@ function DashboardComponentTeacher() {
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-xl p-8 text-white">
         <h1 className="text-3xl font-bold mb-2">Thống kê giảng dạy</h1>
         <p className="text-blue-100">
-          Tổng quan về hoạt động giảng dạy và tiến độ học tập của học sinh
+          Tổng quan về hoạt động giảng dạy và tiến độ học tập của sinh viên
         </p>
       </div>
 
@@ -122,7 +122,7 @@ function DashboardComponentTeacher() {
           value={summary?.totalCompletedCount?.toString() || "0"}
           icon={<CheckCircle size={28} className="text-white" />}
           gradient="from-green-500 to-green-600"
-          subtitle="Tổng số bài học sinh đã hoàn thành"
+          subtitle="Tổng số bài sinh viên đã hoàn thành"
         />
         <SummaryCard
           title="Tổng bài tập"
@@ -136,7 +136,7 @@ function DashboardComponentTeacher() {
           value={summary?.averageScore?.toFixed(1) || "0.0"}
           icon={<Star size={28} className="text-white" />}
           gradient="from-orange-500 to-orange-600"
-          subtitle="Điểm TB của học sinh"
+          subtitle="Điểm TB của sinh viên"
         />
       </div>
 
@@ -213,7 +213,7 @@ function DashboardComponentTeacher() {
               Kết quả gần đây
             </h3>
             <p className="text-green-100 text-sm mt-1">
-              Bài tập học sinh hoàn thành gần đây
+              Bài tập sinh viên hoàn thành gần đây
             </p>
           </div>
           <div className="p-6 space-y-4 max-h-[500px] overflow-y-auto">
