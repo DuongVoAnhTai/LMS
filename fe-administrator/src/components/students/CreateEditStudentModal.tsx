@@ -68,7 +68,7 @@ export default function CreateEditStudentModal({
     <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
       <div className="bg-white p-6 rounded-xl shadow-lg w-[450px] space-y-4 animate-fadeIn">
         <h2 className="text-xl font-semibold text-gray-900">
-          {student ? "Cập nhật người dùng" : "Thêm người dùng mới"}
+          {student ? "Cập nhật tài khoản" : "Thêm tài khoản mới"}
         </h2>
 
         <div className="space-y-4">

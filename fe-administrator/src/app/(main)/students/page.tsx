@@ -61,7 +61,7 @@ export default function StudentsPage() {
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Quản lý học sinh</h1>
+        <h1 className="text-2xl font-bold">Quản lý tài khoản</h1>
 
         <button
           onClick={() => {
@@ -71,7 +71,7 @@ export default function StudentsPage() {
           className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700 transition-colors"
         >
           <Plus size={20} />
-          Thêm học sinh
+          Thêm tài khoản
         </button>
       </div>
 
