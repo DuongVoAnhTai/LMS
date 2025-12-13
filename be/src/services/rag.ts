@@ -67,8 +67,8 @@ export class RAGService {
             // Download file
             const buffer = await fileProcessorService.downloadFile(fileUrl);
 
-            // Extract text từ file
-            const text = await fileProcessorService.processFile(buffer, fileFormat);
+            // Extract text từ file (dùng pdf-parse cho hội thoại)
+            const text = await fileProcessorService.processFile(buffer, fileFormat, true);
 
             if (!text || text.trim().length === 0) {
                 throw new Error('No text content extracted from file');

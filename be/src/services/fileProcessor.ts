@@ -1,6 +1,7 @@
 // src/services/fileProcessor.service.ts
 import mammoth from 'mammoth';
 import PDFParser from 'pdf2json';
+import { PDFParse } from 'pdf-parse';
 
 export class FileProcessorService {
     /**
@@ -44,6 +45,28 @@ export class FileProcessorService {
     }
 
     /**
+     * Xử lý file PDF sử dụng pdf-parse
+     */
+    async processPDF2(buffer: Buffer): Promise<string> {
+        try {
+            const parser = new PDFParse({ data: buffer });
+            const result = await parser.getText();
+            const text = result.text.trim();
+
+            if (!text || text.length === 0) {
+                throw new Error('No text content extracted from PDF');
+            }
+
+            console.log(`Successfully extracted ${text.length} characters from PDF`);
+            await parser.destroy();
+            return text;
+        } catch (error) {
+            console.error('Error processing PDF:', error);
+            throw new Error(`Failed to process PDF file: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    }
+
+    /**
      * Xử lý file DOCX
      */
     async processDOCX(buffer: Buffer): Promise<string> {
@@ -70,14 +93,17 @@ export class FileProcessorService {
 
     /**
      * Xử lý file dựa trên format
+     * @param buffer - Buffer của file
+     * @param fileFormat - Định dạng file
+     * @param isConversation - True nếu đang xử lý trong hội thoại (dùng pdf-parse), false nếu bình thường (dùng pdf2json)
      */
-    async processFile(buffer: Buffer, fileFormat: string): Promise<string> {
+    async processFile(buffer: Buffer, fileFormat: string, isConversation: boolean = false): Promise<string> {
         const format = fileFormat.toLowerCase();
 
         switch (format) {
             case 'pdf':
             case 'application/pdf':
-                return this.processPDF(buffer);
+                return isConversation ? this.processPDF2(buffer) : this.processPDF(buffer);
 
             case 'docx':
             case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
