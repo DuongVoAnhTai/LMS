@@ -88,10 +88,10 @@ export default function QuestionFormModal({
                 className="mt-1 w-full border rounded-md p-2 bg-white"
               >
                 <option value="SINGLE_CHOICE">Chọn một</option>
-                <option value="MULTIPLE_CHOICE">Chọn nhiều</option>
+                {/* <option value="MULTIPLE_CHOICE">Chọn nhiều</option> */}
                 <option value="SHORT_ANSWER">Trả lời ngắn</option>
                 <option value="LONG_ANSWER">Tự luận</option>
-                <option value="FILL_BLANK">Điền vào chỗ trống</option>
+                {/* <option value="FILL_BLANK">Điền vào chỗ trống</option> */}
               </select>
             </label>
             <label className="block">

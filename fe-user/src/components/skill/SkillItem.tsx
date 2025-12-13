@@ -10,6 +10,7 @@ import {
   PlusCircle,
   Edit,
   Trash2,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { useAuth } from "@/context/AuthContext";
@@ -34,6 +35,9 @@ function SkillItem() {
   const [editingResource, setEditingResource] =
     useState<LearningResource | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [generatingQuestions, setGeneratingQuestions] = useState<string | null>(
+    null
+  );
 
   const canManage =
     userDetail?.role === "ADMIN" || userDetail?.role === "TEACHER";
@@ -144,6 +148,70 @@ function SkillItem() {
     }
   };
 
+  const handleGenerateQuestions = async (resource: LearningResource) => {
+    if (resource.resourceType !== "FILE") {
+      toast.error("Chỉ có thể tạo câu hỏi từ tài liệu FILE");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Bạn có muốn tự động tạo câu hỏi trắc nghiệm từ tài liệu "${resource.title}" không?\n\nHệ thống sẽ sử dụng AI để:\n- Phân tích chủ đề từ tên tài liệu\n- Tạo các chương học tập\n- Tạo bài tập trắc nghiệm cho mỗi chương\n- Tạo bài tập tổng kết\n\nQuá trình này có thể mất 1-2 phút.`
+    );
+
+    if (!confirmed) return;
+
+    setGeneratingQuestions(resource.id);
+
+    try {
+      // === PHƯƠNG PHÁP CŨ: Sử dụng RAG (đọc nội dung file) ===
+      // Đã comment vì timeout và chậm
+      //
+      // // Step 1: Process RAG (lưu vào vector store)
+      // toast.info("Đang xử lý tài liệu cho RAG...");
+      // const ragResponse = await resourceService.processRAG(resource.id);
+      //
+      // if (ragResponse.error) {
+      //   console.error("Process RAG error:", ragResponse.error);
+      //   toast.warning("Không thể xử lý RAG, tiếp tục tạo câu hỏi...");
+      // } else {
+      //   toast.success("Đã xử lý RAG thành công!");
+      // }
+      //
+      // // Step 2: Generate Questions từ nội dung file
+      // toast.info("Đang tạo câu hỏi từ nội dung tài liệu...");
+      // const response = await resourceService.generateQuestions(resource.id, {
+      //   useFileName: false, // Đọc nội dung file (RAG)
+      // });
+
+      // === PHƯƠNG PHÁP MỚI: Sử dụng kiến thức chung của LLM ===
+      // Nhanh hơn, không cần đọc file, dựa vào tên file để xác định chủ đề
+      toast.info("Đang tạo câu hỏi từ chủ đề tài liệu...");
+      const response = await resourceService.generateQuestions(resource.id, {
+        useFileName: true, // Sử dụng kiến thức chung của LLM
+        numberOfChapters: 3,
+        questionsPerChapter: 5,
+      });
+
+      if (response.success && response.data) {
+        toast.success(
+          `Tạo thành công ${response.data.totalQuestionsCreated} câu hỏi từ ${response.data.chaptersCount} chương!`
+        );
+        // Reload skill để lấy exercises mới
+        const updatedSkill = await skillService.getSkillById(skillId);
+        if (updatedSkill) {
+          setSkill(updatedSkill);
+        }
+      } else {
+        toast.error(response.error || "Không thể tạo câu hỏi");
+      }
+    } catch (error: any) {
+      console.error("Generate questions error:", error);
+      toast.error("Đã xảy ra lỗi khi tạo câu hỏi");
+    } finally {
+      setGeneratingQuestions(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-96">
@@ -225,7 +293,24 @@ function SkillItem() {
                   </Link>
 
                   {canManage && (
-                    <div className="flex items-center">
+                    <div className="flex items-center gap-1">
+                      {resource.resourceType === "FILE" && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleGenerateQuestions(resource);
+                          }}
+                          disabled={generatingQuestions === resource.id}
+                          className="p-2 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Tạo câu hỏi tự động"
+                        >
+                          {generatingQuestions === resource.id ? (
+                            <Loader2 className="animate-spin" size={16} />
+                          ) : (
+                            <Sparkles size={16} />
+                          )}
+                        </button>
+                      )}
                       <button
                         onClick={(e) => {
                           e.stopPropagation(); // Ngăn sự kiện click lan ra ngoài
@@ -241,7 +326,7 @@ function SkillItem() {
                           e.stopPropagation();
                           handleDeleteResource(resource.id);
                         }}
-                        className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-md"
+                        className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-md cursor-pointer"
                         title="Xóa"
                       >
                         <Trash2 size={16} />

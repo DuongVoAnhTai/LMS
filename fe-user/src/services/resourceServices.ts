@@ -46,3 +46,65 @@ export const deleteResource = async (
     };
   }
 };
+
+export const generateQuestions = async (
+  resourceId: string,
+  options?: {
+    useFileName?: boolean;
+    numberOfChapters?: number;
+    questionsPerChapter?: number;
+  }
+): Promise<{
+  success?: boolean;
+  message?: string;
+  data?: {
+    summary: string;
+    chaptersCount: number;
+    totalQuestionsCreated: number;
+    exercisesCreated: string[];
+    method?: string;
+  };
+  error?: string;
+}> => {
+  try {
+    const res = await httpRequest.post(
+      `resources/${resourceId}/generate-questions`,
+      {
+        // Sử dụng kiến thức chung của LLM thay vì đọc nội dung file (RAG)
+        useFileName: options?.useFileName ?? true,
+        numberOfChapters: options?.numberOfChapters ?? 3,
+        questionsPerChapter: options?.questionsPerChapter ?? 5,
+      }
+    );
+    return res;
+  } catch (error: any) {
+    return {
+      error: error.response?.data?.error || "Failed to generate questions",
+    };
+  }
+};
+
+export const processRAG = async (
+  resourceId: string
+): Promise<{
+  success?: boolean;
+  message?: string;
+  data?: {
+    resourceId: string;
+    fileName: string;
+    skillId: string;
+  };
+  error?: string;
+}> => {
+  try {
+    const res = await httpRequest.post(
+      `resources/${resourceId}/process-rag`,
+      {}
+    );
+    return res;
+  } catch (error: any) {
+    return {
+      error: error.response?.data?.error || "Failed to process RAG",
+    };
+  }
+};

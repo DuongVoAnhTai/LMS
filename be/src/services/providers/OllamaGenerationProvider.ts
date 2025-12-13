@@ -1,4 +1,5 @@
 import { IGenerationProvider } from './IGenerationProvider';
+import { Agent, fetch as undiciFetch } from 'undici';
 
 interface OllamaMessage {
     role: 'system' | 'user' | 'assistant';
@@ -26,15 +27,22 @@ export class OllamaGenerationProvider implements IGenerationProvider {
     private baseUrl: string;
     private model: string;
     private timeout: number;
+    private agent: Agent;
 
     constructor(
         baseUrl: string = 'http://localhost:11434',
         model: string = 'qwen3:8b',
-        timeout: number = 300000 // 5 phút timeout cho generation (lâu hơn embedding)
+        timeout: number = 900000 // 15 phút timeout cho generation
     ) {
         this.baseUrl = baseUrl;
         this.model = model;
         this.timeout = timeout;
+        // Tạo Agent với timeout dài hơn cho Ollama
+        this.agent = new Agent({
+            headersTimeout: timeout,
+            bodyTimeout: timeout,
+            connectTimeout: 30000, // 30 giây để connect
+        });
     }
 
     /**
@@ -45,7 +53,7 @@ export class OllamaGenerationProvider implements IGenerationProvider {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
-            const response = await fetch(`${this.baseUrl}/api/generate`, {
+            const response = await undiciFetch(`${this.baseUrl}/api/generate`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -56,6 +64,7 @@ export class OllamaGenerationProvider implements IGenerationProvider {
                     stream: false,
                 } as OllamaGenerateRequest),
                 signal: controller.signal,
+                dispatcher: this.agent,
             });
 
             clearTimeout(timeoutId);
@@ -64,7 +73,7 @@ export class OllamaGenerationProvider implements IGenerationProvider {
                 throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
             }
 
-            const data: OllamaGenerateResponse = await response.json();
+            const data: OllamaGenerateResponse = await response.json() as OllamaGenerateResponse;
             return data.response || '';
         } catch (error) {
             if (error instanceof Error && error.name === 'AbortError') {
@@ -105,7 +114,7 @@ export class OllamaGenerationProvider implements IGenerationProvider {
                 content: prompt,
             });
 
-            const response = await fetch(`${this.baseUrl}/api/chat`, {
+            const response = await undiciFetch(`${this.baseUrl}/api/chat`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -116,6 +125,7 @@ export class OllamaGenerationProvider implements IGenerationProvider {
                     stream: false,
                 } as OllamaGenerateRequest),
                 signal: controller.signal,
+                dispatcher: this.agent,
             });
 
             clearTimeout(timeoutId);
@@ -124,7 +134,7 @@ export class OllamaGenerationProvider implements IGenerationProvider {
                 throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
             }
 
-            const data: OllamaGenerateResponse = await response.json();
+            const data: OllamaGenerateResponse = await response.json() as OllamaGenerateResponse;
             return data.message?.content || '';
         } catch (error) {
             if (error instanceof Error && error.name === 'AbortError') {

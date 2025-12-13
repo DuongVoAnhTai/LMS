@@ -1,36 +1,46 @@
 // src/services/fileProcessor.service.ts
 import mammoth from 'mammoth';
-import { PDFParse } from 'pdf-parse';
+import PDFParser from 'pdf2json';
 
 export class FileProcessorService {
     /**
-     * Xử lý file PDF
+     * Xử lý file PDF sử dụng pdf2json
      */
     async processPDF(buffer: Buffer): Promise<string> {
-        try {
-            // Sử dụng pdf-parse để extract text từ PDF
-            const pdfParser = new PDFParse({ data: buffer });
-            const result = await pdfParser.getText();
+        return new Promise((resolve, reject) => {
+            try {
+                const pdfParser = new PDFParser(null, true); // true = raw text mode
 
-            const text = result.text.trim();
+                pdfParser.on('pdfParser_dataError', (errData: Error | { parserError: Error }) => {
+                    const error = errData instanceof Error ? errData : errData.parserError;
+                    console.error('PDF parsing error:', error);
+                    reject(new Error(`Failed to parse PDF: ${error.message}`));
+                });
 
-            // Kiểm tra xem có text được extract không
-            if (!text || text.length === 0) {
-                console.warn('No text content extracted from PDF');
-                throw new Error('No text content extracted from PDF');
+                pdfParser.on('pdfParser_dataReady', () => {
+                    try {
+                        const text = pdfParser.getRawTextContent().trim();
+
+                        if (!text || text.length === 0) {
+                            console.warn('No text content extracted from PDF');
+                            reject(new Error('No text content extracted from PDF'));
+                            return;
+                        }
+
+                        console.log(`Successfully extracted ${text.length} characters from PDF`);
+                        resolve(text);
+                    } catch (err) {
+                        reject(new Error(`Failed to get text content: ${err instanceof Error ? err.message : String(err)}`));
+                    }
+                });
+
+                // Parse PDF từ buffer
+                pdfParser.parseBuffer(buffer);
+            } catch (error) {
+                console.error('Error processing PDF:', error);
+                reject(new Error(`Failed to process PDF file: ${error instanceof Error ? error.message : String(error)}`));
             }
-
-            console.log(`Successfully extracted ${text.length} characters from PDF`);
-            console.log(`PDF info: ${result.total} pages`);
-
-            // Cleanup
-            await pdfParser.destroy();
-
-            return text;
-        } catch (error) {
-            console.error('Error processing PDF:', error);
-            throw new Error(`Failed to process PDF file: ${error instanceof Error ? error.message : String(error)}`);
-        }
+        });
     }
 
     /**

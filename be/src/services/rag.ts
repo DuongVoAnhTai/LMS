@@ -222,6 +222,59 @@ Hãy trả lời theo đúng quy tắc system prompt.
     async shouldUseRAG(conversationId: string): Promise<boolean> {
         return vectorStoreService.hasVectors(conversationId);
     }
+
+    /**
+     * Xử lý và thêm resource file vào vector store (cho skill resources)
+     */
+    async processAndStoreResource(
+        resourceId: string,
+        fileUrl: string,
+        fileName: string,
+        fileFormat: string
+    ): Promise<void> {
+        try {
+            console.log(`[RAG] Processing resource: ${resourceId}, file: ${fileName}, ${fileUrl}`);
+
+            console.log(fileFormat);
+            // Download file
+            const buffer = await fileProcessorService.downloadFile(fileUrl);
+
+            // Extract text từ file
+            const text = await fileProcessorService.processFile(buffer, fileFormat);
+
+            if (!text || text.trim().length === 0) {
+                throw new Error('No text content extracted from file');
+            }
+
+            // Xóa vectors cũ nếu có (để re-process)
+            await vectorStoreService.deleteResourceVectors(resourceId);
+
+            // Lưu vào vector store với resource_id
+            await vectorStoreService.addDocument({
+                resourceId,
+                content: text,
+                sourceType: 'FILE',
+                sourceName: fileName,
+                metadata: {
+                    fileFormat,
+                    fileUrl,
+                    processedAt: new Date().toISOString(),
+                },
+            });
+
+            console.log(`[RAG] Resource processed and stored: ${resourceId}`);
+        } catch (error) {
+            console.error('[RAG] Error processing resource:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Kiểm tra xem resource đã được xử lý RAG chưa
+     */
+    async isResourceRAGReady(resourceId: string): Promise<boolean> {
+        return vectorStoreService.hasResourceVectors(resourceId);
+    }
 }
 
 export const ragService = new RAGService();
