@@ -43,7 +43,7 @@ function ResultComponent() {
 
       {results.length === 0 ? (
         <div className="text-center py-12 text-gray-500">
-          <p>Bạn chưa hoàn thành bài tập nào.</p>
+          <p>Chưa hoàn thành.</p>
         </div>
       ) : (
         <div className="overflow-x-auto">

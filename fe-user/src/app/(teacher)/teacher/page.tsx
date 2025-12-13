@@ -1,7 +1,7 @@
-import DashboardComponent from "@/components/dashboard/DashboardComponent";
+import DashboardComponentTeacher from "@/components/dashboardteacher/DashboardComponent";
 
 function Home() {
-  return <DashboardComponent />;
+  return <DashboardComponentTeacher />;
 }
 
 export default Home;

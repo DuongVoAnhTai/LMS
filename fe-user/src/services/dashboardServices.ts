@@ -10,3 +10,15 @@ export const getDashboardSummary = async (): Promise<any> => {
     };
   }
 };
+
+export const getTeacherDashboardSummary = async (): Promise<any> => {
+  try {
+    const res = await httpRequest.get("dashboard/teacher-summary");
+    return res;
+  } catch (error: any) {
+    return {
+      error:
+        error.response?.data?.error || "Failed to fetch teacher dashboard data",
+    };
+  }
+};
