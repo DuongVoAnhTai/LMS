@@ -20,7 +20,6 @@ const navItems: NavItem[] = [
   { id: "dashboard", label: "Dashboard", icon: TrendingUp, path: "/teacher" },
   { id: "skills", label: "Kỹ năng", icon: BookOpen, path: "/teacher/skills" },
   { id: "chat", label: "Chat", icon: MessageSquare, path: "/teacher/messages" },
-  { id: "results", label: "Kết quả", icon: Award, path: "/teacher/results" },
   { id: "profile", label: "Hồ sơ", icon: UserIcon, path: "/teacher/profile" },
 ];
 

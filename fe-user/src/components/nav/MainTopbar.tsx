@@ -89,7 +89,7 @@ const MainTopbar = ({ sidebarOpen, setSidebarOpen }: TopbarProps) => {
           </button>
 
           {/* Ô tìm kiếm */}
-          <div className="relative">
+          {/* <div className="relative">
             <Search
               className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
               size={20}
@@ -101,13 +101,13 @@ const MainTopbar = ({ sidebarOpen, setSidebarOpen }: TopbarProps) => {
               placeholder="Tìm kiếm kỹ năng, bài học..."
               className="pl-10 pr-4 py-2 w-64 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-          </div>
+          </div> */}
         </div>
 
         {/* Right */}
         <div className="flex items-center space-x-4">
           {/* Notifications */}
-          <div className="relative">
+          {/* <div className="relative">
             <button
               onClick={() => setNotifOpen((s) => !s)}
               className="relative p-2 text-gray-600 hover:text-gray-900"
@@ -149,7 +149,7 @@ const MainTopbar = ({ sidebarOpen, setSidebarOpen }: TopbarProps) => {
                 </div>
               </div>
             )}
-          </div>
+          </div> */}
 
           {/* User info */}
           <button

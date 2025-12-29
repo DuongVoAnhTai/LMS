@@ -137,8 +137,8 @@ const MessageTopbar = () => {
   const otherParticipant =
     type === "direct"
       ? activeConversation.participants.find(
-          (p) => p.user.id !== fetchedUser?.id
-        )
+        (p) => p.user.id !== fetchedUser?.id
+      )
       : null;
 
   const isOnline = otherParticipant
@@ -189,8 +189,8 @@ const MessageTopbar = () => {
             {type === "group"
               ? `${activeConversation.participants.length} thành viên`
               : isOnline
-              ? "Đang hoạt động"
-              : "Ngoại tuyến"}
+                ? "Đang hoạt động"
+                : "Ngoại tuyến"}
           </p>
         </div>
       </div>
