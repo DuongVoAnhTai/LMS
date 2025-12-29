@@ -4,7 +4,7 @@ import { IGenerationProvider } from './IGenerationProvider';
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 export class GeminiGenerationProvider implements IGenerationProvider {
-    private model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+    private model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
     /**
      * Tạo response từ prompt đơn giản

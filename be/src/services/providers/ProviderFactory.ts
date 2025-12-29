@@ -4,9 +4,10 @@ import { GeminiEmbeddingProvider } from './GeminiEmbeddingProvider';
 import { GeminiGenerationProvider } from './GeminiGenerationProvider';
 import { OllamaEmbeddingProvider } from './OllamaEmbeddingProvider';
 import { OllamaGenerationProvider } from './OllamaGenerationProvider';
+import { GroqGenerationProvider } from './GroqGenerationProvider';
 
 export type EmbeddingProviderType = 'gemini' | 'ollama';
-export type GenerationProviderType = 'gemini' | 'ollama';
+export type GenerationProviderType = 'gemini' | 'ollama' | 'groq';
 
 export class ProviderFactory {
     /**
@@ -41,6 +42,8 @@ export class ProviderFactory {
         options?: {
             ollamaUrl?: string;
             ollamaModel?: string;
+            groqApiKey?: string;
+            groqModel?: string;
         }
     ): IGenerationProvider {
         const providerType = type || (process.env.GENERATION_PROVIDER as GenerationProviderType) || 'gemini';
@@ -50,6 +53,11 @@ export class ProviderFactory {
                 return new OllamaGenerationProvider(
                     options?.ollamaUrl || process.env.OLLAMA_URL || 'http://localhost:11434',
                     options?.ollamaModel || process.env.OLLAMA_GENERATION_MODEL || 'qwen3:8b'
+                );
+            case 'groq':
+                return new GroqGenerationProvider(
+                    options?.groqApiKey,
+                    options?.groqModel
                 );
             case 'gemini':
             default:
@@ -110,7 +118,17 @@ export class ProviderFactory {
                     console.warn('Ollama is running but model not found. Please run: ollama pull qwen3:8b');
                 }
             } else {
-                console.warn('Ollama is not available, falling back to Gemini');
+                console.warn('Ollama is not available, falling back...');
+            }
+        }
+
+        if (preferredType === 'groq' || preferredType === 'ollama') {
+            const groqProvider = new GroqGenerationProvider();
+            if (groqProvider.isAvailable()) {
+                console.log('Using Groq for text generation');
+                return groqProvider;
+            } else if (preferredType === 'groq') {
+                console.warn('Groq API key not configured, falling back to Gemini');
             }
         }
 

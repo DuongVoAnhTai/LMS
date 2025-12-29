@@ -97,11 +97,27 @@ const MessageTopbar = () => {
 
     if (result.error) {
       alert("Không thể xóa cuộc hội thoại: " + result.error);
-    } else {
-      setIsDeleteModalOpen(false);
-      router.push("/message");
+      setIsUpdating(false);
+      return;
     }
+
+    // Fetch conversations to get the most recent one
+    const conversationsResult = await conversationService.getConversations({ take: 1 });
+    setIsDeleteModalOpen(false);
     setIsUpdating(false);
+
+    // Determine base route based on user role
+    const baseRoute = fetchedUser?.role === "ADMIN" || fetchedUser?.role === "TEACHER"
+      ? "/teacher/messages"
+      : "/messages";
+
+    if (conversationsResult.conversations && conversationsResult.conversations.length > 0) {
+      // Navigate to the most recent conversation
+      router.push(`${baseRoute}/${conversationsResult.conversations[0].id}`);
+    } else {
+      // No conversations left, go to base message route
+      router.push(baseRoute);
+    }
   };
 
   // Render trạng thái loading
@@ -188,9 +204,11 @@ const MessageTopbar = () => {
           >
             {type === "group"
               ? `${activeConversation.participants.length} thành viên`
-              : isOnline
+              : type === "ai"
                 ? "Đang hoạt động"
-                : "Ngoại tuyến"}
+                : isOnline
+                  ? "Đang hoạt động"
+                  : "Ngoại tuyến"}
           </p>
         </div>
       </div>
@@ -237,7 +255,7 @@ const MessageTopbar = () => {
 
       {/* Modal đổi tên */}
       {isRenameModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-96 max-w-[90%]">
             <h3 className="text-lg font-semibold mb-4">Đổi tên cuộc hội thoại</h3>
             <input
@@ -273,7 +291,7 @@ const MessageTopbar = () => {
 
       {/* Modal xác nhận xóa */}
       {isDeleteModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-96 max-w-[90%]">
             <h3 className="text-lg font-semibold mb-2">Xóa cuộc hội thoại</h3>
             <p className="text-gray-600 mb-4">
