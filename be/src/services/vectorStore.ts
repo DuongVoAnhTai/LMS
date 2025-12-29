@@ -89,7 +89,7 @@ export class VectorStoreService {
     async searchSimilar(
         conversationId: string,
         query: string,
-        limit: number = 5
+        limit: number = 7
     ): Promise<SearchResult[]> {
         try {
             console.log(`[VectorStore] Creating embedding for query: "${query.substring(0, 100)}..."`);

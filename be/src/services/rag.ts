@@ -166,7 +166,7 @@ export class RAGService {
             const relevantDocs = await vectorStoreService.searchSimilar(
                 conversationId,
                 userMessage,
-                5
+                7
             );
 
             console.log(`[RAG] Found ${relevantDocs.length} relevant documents`);
@@ -183,16 +183,16 @@ export class RAGService {
             const context = this.buildContext(relevantDocs);
 
             const userPrompt = `
-<CONTEXT>
-${context || 'NONE'}
-</CONTEXT>
-
-<QUESTION>
-${userMessage}
-</QUESTION>
-
-Hãy trả lời theo đúng quy tắc system prompt.
-`;
+            <CONTEXT>
+            ${context || 'NONE'}
+            </CONTEXT>
+                    
+            <QUESTION>
+            ${userMessage}
+            </QUESTION>
+                    
+            Hãy trả lời theo đúng quy tắc system prompt.
+            `;
 
             console.log(`[RAG] Context length: ${context.length} characters`);
 

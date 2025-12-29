@@ -197,7 +197,10 @@ function MessageComponent({ conversationId }: MessageComponentProps) {
       if (uploadResult && socket) {
         // Lấy tên file gốc (không có extension) và extension riêng
         const originalName = fileToSend?.name || uploadResult.original_filename;
-        const fileExtension = uploadResult.format?.toLowerCase();
+        // Cloudinary không trả về format cho raw files (docx, txt), nên lấy từ tên file gốc
+        const fileExtension = (
+          uploadResult.format || originalName.split('.').pop()
+        )?.toLowerCase();
 
         // Loại bỏ extension nếu đã có trong tên file
         const fileNameWithoutExt = originalName.replace(

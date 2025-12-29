@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useEffect, useState, useRef } from "react";
+import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { useAuth } from "@/context/AuthContext";
 import { usePresence } from "@/context/PresenceContext";
@@ -11,6 +11,7 @@ import * as messageHelper from "@/utils/messageHelper";
 
 const MessageTopbar = () => {
   const params = useParams();
+  const router = useRouter();
   const activeConversationId = params.id as string;
 
   const [activeConversation, setActiveConversation] =
@@ -18,6 +19,26 @@ const MessageTopbar = () => {
   const [loading, setLoading] = useState(true);
   const { userDetail: fetchedUser } = useAuth();
   const { isUserOnline } = usePresence();
+
+  // Dropdown menu state
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
+  const [isUpdating, setIsUpdating] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     // Nếu không có conversation nào được chọn, reset state
@@ -46,6 +67,42 @@ const MessageTopbar = () => {
 
     fetchConversationDetails();
   }, [activeConversationId]); // Chạy lại mỗi khi ID active thay đổi
+
+  // Handle rename conversation
+  const handleRename = async () => {
+    if (!newTitle.trim() || !activeConversationId) return;
+
+    setIsUpdating(true);
+    const result = await conversationService.updateConversation(
+      activeConversationId,
+      newTitle.trim()
+    );
+
+    if (result.error) {
+      alert("Không thể đổi tên cuộc hội thoại: " + result.error);
+    } else {
+      setActiveConversation(result.conversation);
+      setIsRenameModalOpen(false);
+      setNewTitle("");
+    }
+    setIsUpdating(false);
+  };
+
+  // Handle delete conversation
+  const handleDelete = async () => {
+    if (!activeConversationId) return;
+
+    setIsUpdating(true);
+    const result = await conversationService.deleteConversation(activeConversationId);
+
+    if (result.error) {
+      alert("Không thể xóa cuộc hội thoại: " + result.error);
+    } else {
+      setIsDeleteModalOpen(false);
+      router.push("/message");
+    }
+    setIsUpdating(false);
+  };
 
   // Render trạng thái loading
   if (loading) {
@@ -138,44 +195,109 @@ const MessageTopbar = () => {
         </div>
       </div>
 
-      <div className="flex items-center space-x-2">
-        {type !== "ai" && (
-          <>
-            <button
-              onClick={() => alert("📞 Demo gọi thoại")}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <Icon.Phone size={20} className="text-gray-600" />
-            </button>
-            <button
-              onClick={() => alert("🎥 Demo video call")}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <Icon.Video size={20} className="text-gray-600" />
-            </button>
-          </>
-        )}
-        {type === "group" && (
-          <button
-            onClick={() => alert("➕ Thêm thành viên")}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <Icon.UserPlus size={20} className="text-gray-600" />
-          </button>
-        )}
+      {/* Menu dropdown */}
+      <div className="relative" ref={menuRef}>
         <button
-          onClick={() => alert("ℹ️ Thông tin hội thoại")}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-        >
-          <Icon.Info size={20} className="text-gray-600" />
-        </button>
-        <button
-          onClick={() => alert("⋮ Menu thêm")}
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
           className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
         >
           <Icon.MoreVertical size={20} className="text-gray-600" />
         </button>
+
+        {isMenuOpen && (
+          <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+            {/* Đổi tên - chỉ hiển thị với AI và group */}
+            {(type === "ai" || type === "group") && (
+              <button
+                onClick={() => {
+                  setNewTitle(activeConversation.title || name);
+                  setIsRenameModalOpen(true);
+                  setIsMenuOpen(false);
+                }}
+                className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+              >
+                <Icon.Edit size={16} />
+                <span>Đổi tên</span>
+              </button>
+            )}
+            {/* Xóa cuộc hội thoại - hiển thị với tất cả loại */}
+            <button
+              onClick={() => {
+                setIsDeleteModalOpen(true);
+                setIsMenuOpen(false);
+              }}
+              className="w-full px-4 py-2 text-left text-red-600 hover:bg-red-50 flex items-center gap-2"
+            >
+              <Icon.Trash size={16} />
+              <span>Xóa cuộc hội thoại</span>
+            </button>
+          </div>
+        )}
       </div>
+
+      {/* Modal đổi tên */}
+      {isRenameModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 max-w-[90%]">
+            <h3 className="text-lg font-semibold mb-4">Đổi tên cuộc hội thoại</h3>
+            <input
+              type="text"
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              placeholder="Nhập tên mới..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              autoFocus
+            />
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                onClick={() => {
+                  setIsRenameModalOpen(false);
+                  setNewTitle("");
+                }}
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                disabled={isUpdating}
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleRename}
+                disabled={isUpdating || !newTitle.trim()}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+              >
+                {isUpdating ? "Đang lưu..." : "Lưu"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal xác nhận xóa */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 max-w-[90%]">
+            <h3 className="text-lg font-semibold mb-2">Xóa cuộc hội thoại</h3>
+            <p className="text-gray-600 mb-4">
+              Bạn có chắc chắn muốn xóa cuộc hội thoại này? Hành động này không thể hoàn tác.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setIsDeleteModalOpen(false)}
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                disabled={isUpdating}
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={isUpdating}
+                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50"
+              >
+                {isUpdating ? "Đang xóa..." : "Xóa"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

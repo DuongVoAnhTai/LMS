@@ -74,7 +74,6 @@ export class FileProcessorService {
             const result = await mammoth.extractRawText({ buffer });
             return result.value;
         } catch (error) {
-            console.error('Error processing DOCX:', error);
             throw new Error('Failed to process DOCX file');
         }
     }
@@ -84,9 +83,9 @@ export class FileProcessorService {
      */
     async processTXT(buffer: Buffer): Promise<string> {
         try {
-            return buffer.toString('utf-8');
+            const text = buffer.toString('utf-8');
+            return text;
         } catch (error) {
-            console.error('Error processing TXT:', error);
             throw new Error('Failed to process TXT file');
         }
     }

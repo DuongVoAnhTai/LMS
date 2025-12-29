@@ -33,6 +33,11 @@ export const put = async (path: string, data = {}, option = {}) => {
   return response.data;
 };
 
+export const patch = async (path: string, data = {}, option = {}) => {
+  const response = await httpRequest.patch(path, data, option);
+  return response.data;
+};
+
 export const del = async (path: string, option = {}) => {
   const response = await httpRequest.delete(path, option);
   return response.data;

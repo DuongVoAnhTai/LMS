@@ -351,8 +351,8 @@ HÃY TRẢ VỀ CHỈ JSON, KHÔNG CÓ GÌ KHÁC.`;
    */
   private buildPromptFromFileName(
     fileName: string,
-    numberOfChapters: number = 3,
-    questionsPerChapter: number = 5
+    numberOfChapters: number = 7,
+    questionsPerChapter: number = 10
   ): string {
     // Loại bỏ extension và format tên file thành topic
     const topicName = fileName
@@ -422,8 +422,8 @@ TRẢ VỀ JSON NGAY BÂY GIỜ:`;
     }
   ): Promise<GeneratedContent> {
     try {
-      const numberOfChapters = options?.numberOfChapters ?? 3;
-      const questionsPerChapter = options?.questionsPerChapter ?? 5;
+      const numberOfChapters = options?.numberOfChapters ?? 5;
+      const questionsPerChapter = options?.questionsPerChapter ?? 10;
 
       // Lấy AI generation provider
       const provider =

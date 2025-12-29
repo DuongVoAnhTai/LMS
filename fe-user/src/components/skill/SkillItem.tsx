@@ -91,13 +91,13 @@ function SkillItem() {
         setSkill((prev) =>
           prev
             ? {
-                ...prev,
-                resources: prev.resources?.map((r) =>
-                  r.id === editingResource.id && response.resource
-                    ? response.resource
-                    : r
-                ) as LearningResource[],
-              }
+              ...prev,
+              resources: prev.resources?.map((r) =>
+                r.id === editingResource.id && response.resource
+                  ? response.resource
+                  : r
+              ) as LearningResource[],
+            }
             : null
         );
         toast.success("Cập nhật tài nguyên thành công!");
@@ -109,12 +109,12 @@ function SkillItem() {
         setSkill((prev) =>
           prev
             ? {
-                ...prev,
-                resources: [
-                  ...(prev.resources || []),
-                  response.resource as LearningResource,
-                ],
-              }
+              ...prev,
+              resources: [
+                ...(prev.resources || []),
+                response.resource as LearningResource,
+              ],
+            }
             : null
         );
         toast.success("Tạo tài nguyên thành công!");
@@ -137,9 +137,9 @@ function SkillItem() {
       setSkill((prev) =>
         prev
           ? {
-              ...prev,
-              resources: prev.resources?.filter((r) => r.id !== resourceId),
-            }
+            ...prev,
+            resources: prev.resources?.filter((r) => r.id !== resourceId),
+          }
           : null
       );
       toast.success("Xóa tài nguyên thành công!");
@@ -188,8 +188,8 @@ function SkillItem() {
       toast.info("Đang tạo câu hỏi từ chủ đề tài liệu...");
       const response = await resourceService.generateQuestions(resource.id, {
         useFileName: true, // Sử dụng kiến thức chung của LLM
-        numberOfChapters: 3,
-        questionsPerChapter: 5,
+        numberOfChapters: 7,
+        questionsPerChapter: 10,
       });
 
       if (response.success && response.data) {

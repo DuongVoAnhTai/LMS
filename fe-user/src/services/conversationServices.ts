@@ -89,3 +89,32 @@ export const processFileForRAG = async (
     return { error: "Failed to process file for RAG" };
   }
 };
+
+export const updateConversation = async (
+  conversationId: string,
+  title: string
+) => {
+  try {
+    const res = await httpRequest.patch(`conversations/${conversationId}`, {
+      title,
+    });
+    return res; // { success: true, conversation: {...} }
+  } catch (error: any) {
+    if (error.response?.data?.error) {
+      return { error: error.response.data.error };
+    }
+    return { error: "Failed to update conversation" };
+  }
+};
+
+export const deleteConversation = async (conversationId: string) => {
+  try {
+    const res = await httpRequest.del(`conversations/${conversationId}`);
+    return res; // { success: true, message: "..." }
+  } catch (error: any) {
+    if (error.response?.data?.error) {
+      return { error: error.response.data.error };
+    }
+    return { error: "Failed to delete conversation" };
+  }
+};

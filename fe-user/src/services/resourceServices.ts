@@ -72,8 +72,8 @@ export const generateQuestions = async (
       {
         // Sử dụng kiến thức chung của LLM thay vì đọc nội dung file (RAG)
         useFileName: options?.useFileName ?? true,
-        numberOfChapters: options?.numberOfChapters ?? 3,
-        questionsPerChapter: options?.questionsPerChapter ?? 5,
+        numberOfChapters: options?.numberOfChapters ?? 7,
+        questionsPerChapter: options?.questionsPerChapter ?? 10,
       }
     );
     return res;

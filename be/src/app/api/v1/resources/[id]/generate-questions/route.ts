@@ -12,8 +12,8 @@ import { questionGenerationService } from "@/services/questionGeneration";
  * - useFileName: boolean (optional, default: false)
  *   + true: Sử dụng kiến thức chung của LLM dựa trên tên file (nhanh hơn, không cần đọc file)
  *   + false: Đọc nội dung file và tạo câu hỏi dựa trên nội dung (chính xác hơn nhưng chậm)
- * - numberOfChapters: number (optional, default: 3) - Số chương muốn tạo (chỉ áp dụng khi useFileName=true)
- * - questionsPerChapter: number (optional, default: 5) - Số câu hỏi mỗi chương (chỉ áp dụng khi useFileName=true)
+ * - numberOfChapters: number (optional, default: 5) - Số chương muốn tạo (chỉ áp dụng khi useFileName=true)
+ * - questionsPerChapter: number (optional, default: 10) - Số câu hỏi mỗi chương (chỉ áp dụng khi useFileName=true)
  *
  * Flow:
  * 1. Lấy thông tin resource từ database
@@ -32,8 +32,8 @@ export async function POST(
     // Parse body
     const body = await req.json().catch(() => ({}));
     const useFileName = body.useFileName === true;
-    const numberOfChapters = body.numberOfChapters || 3;
-    const questionsPerChapter = body.questionsPerChapter || 5;
+    const numberOfChapters = body.numberOfChapters || 5;
+    const questionsPerChapter = body.questionsPerChapter || 10;
 
     // 1. Xác thực user
     const payload = await verifyToken(req);
