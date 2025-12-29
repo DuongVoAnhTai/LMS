@@ -34,7 +34,7 @@ const MainSidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
       `}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 text-white font-bold text-xl">
+      <Link href={"/"} className="flex items-center justify-between px-6 py-4 text-white font-bold text-xl">
         Education Admin
         <button
           onClick={() => setSidebarOpen(false)}
@@ -42,7 +42,7 @@ const MainSidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
         >
           <X size={24} />
         </button>
-      </div>
+      </Link>
 
       {/* Navigation */}
       <nav className="mt-4 space-y-1 px-4">

@@ -156,7 +156,7 @@ function DashboardComponentTeacher() {
           <div className="p-6 space-y-4 max-h-[500px] overflow-y-auto">
             {learningProgress.length > 0 ? (
               learningProgress.map((skill) => (
-                <Link href={`/skills/${skill.id}`} key={skill.id}>
+                <Link href={`/teacher/skills/${skill.id}`} key={skill.id}>
                   <div className="group p-5 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-300 cursor-pointer">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">

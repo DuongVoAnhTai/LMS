@@ -138,7 +138,7 @@ const MessageTopbar = () => {
         </div>
       </div>
 
-      <div className="flex items-center space-x-2">
+      {/* <div className="flex items-center space-x-2">
         {type !== "ai" && (
           <>
             <button
@@ -175,7 +175,7 @@ const MessageTopbar = () => {
         >
           <Icon.MoreVertical size={20} className="text-gray-600" />
         </button>
-      </div>
+      </div> */}
     </div>
   );
 };
