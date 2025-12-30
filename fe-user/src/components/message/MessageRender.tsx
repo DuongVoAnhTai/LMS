@@ -112,11 +112,11 @@ function MessageRender({ messages, fetchedUser }: MessageRenderProps) {
                     alt={msg.sender?.username || "U"}
                     width={32}
                     height={32}
-                    className="w-8 h-8 rounded-full mr-2"
+                    className="w-8 h-8 rounded-full mr-2 flex-shrink-0 object-cover"
                   />
                 ) : (
                   // Nếu người đó không có avatarUrl, hiển thị chữ cái đầu
-                  <div className="w-8 h-8 mr-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                  <div className="w-8 h-8 mr-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
                     <span className="text-white text-lg font-bold">
                       {msg.sender?.fullName?.charAt(0).toUpperCase() || "U"}
                     </span>

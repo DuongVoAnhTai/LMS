@@ -18,6 +18,7 @@ import * as resourceIcon from "@/assets/Icon/resourceIcon";
 import * as skillService from "@/services/skillServices";
 import * as resourceService from "@/services/resourceServices";
 import ResourceFormModal from "./ResourceFormModal";
+import ConfirmModal from "@/components/common/ConfirmModal";
 
 function SkillItem() {
   const params = useParams();
@@ -38,6 +39,10 @@ function SkillItem() {
   const [generatingQuestions, setGeneratingQuestions] = useState<string | null>(
     null
   );
+  const [confirmGenerateModal, setConfirmGenerateModal] = useState<{
+    isOpen: boolean;
+    resource: LearningResource | null;
+  }>({ isOpen: false, resource: null });
 
   const canManage =
     userDetail?.role === "ADMIN" || userDetail?.role === "TEACHER";
@@ -148,46 +153,29 @@ function SkillItem() {
     }
   };
 
-  const handleGenerateQuestions = async (resource: LearningResource) => {
+  const handleOpenGenerateModal = (resource: LearningResource) => {
     if (resource.resourceType !== "FILE") {
       toast.error("Chỉ có thể tạo câu hỏi từ tài liệu FILE");
       return;
     }
+    setConfirmGenerateModal({ isOpen: true, resource });
+  };
 
-    const confirmed = window.confirm(
-      `Bạn có muốn tự động tạo câu hỏi trắc nghiệm từ tài liệu "${resource.title}" không?\n\nHệ thống sẽ sử dụng AI để:\n- Phân tích chủ đề từ tên tài liệu\n- Tạo các chương học tập\n- Tạo bài tập trắc nghiệm cho mỗi chương\n- Tạo bài tập tổng kết\n\nQuá trình này có thể mất 1-2 phút.`
-    );
+  const handleCloseGenerateModal = () => {
+    setConfirmGenerateModal({ isOpen: false, resource: null });
+  };
 
-    if (!confirmed) return;
+  const handleConfirmGenerateQuestions = async () => {
+    const resource = confirmGenerateModal.resource;
+    if (!resource) return;
 
+    handleCloseGenerateModal();
     setGeneratingQuestions(resource.id);
 
     try {
-      // === PHƯƠNG PHÁP CŨ: Sử dụng RAG (đọc nội dung file) ===
-      // Đã comment vì timeout và chậm
-      //
-      // // Step 1: Process RAG (lưu vào vector store)
-      // toast.info("Đang xử lý tài liệu cho RAG...");
-      // const ragResponse = await resourceService.processRAG(resource.id);
-      //
-      // if (ragResponse.error) {
-      //   console.error("Process RAG error:", ragResponse.error);
-      //   toast.warning("Không thể xử lý RAG, tiếp tục tạo câu hỏi...");
-      // } else {
-      //   toast.success("Đã xử lý RAG thành công!");
-      // }
-      //
-      // // Step 2: Generate Questions từ nội dung file
-      // toast.info("Đang tạo câu hỏi từ nội dung tài liệu...");
-      // const response = await resourceService.generateQuestions(resource.id, {
-      //   useFileName: false, // Đọc nội dung file (RAG)
-      // });
-
-      // === PHƯƠNG PHÁP MỚI: Sử dụng kiến thức chung của LLM ===
-      // Nhanh hơn, không cần đọc file, dựa vào tên file để xác định chủ đề
       toast.info("Đang tạo câu hỏi từ chủ đề tài liệu...");
       const response = await resourceService.generateQuestions(resource.id, {
-        useFileName: true, // Sử dụng kiến thức chung của LLM
+        useFileName: true,
         numberOfChapters: 7,
         questionsPerChapter: 10,
       });
@@ -196,7 +184,6 @@ function SkillItem() {
         toast.success(
           `Tạo thành công ${response.data.totalQuestionsCreated} câu hỏi từ ${response.data.chaptersCount} chương!`
         );
-        // Reload skill để lấy exercises mới
         const updatedSkill = await skillService.getSkillById(skillId);
         if (updatedSkill) {
           setSkill(updatedSkill);
@@ -298,7 +285,7 @@ function SkillItem() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleGenerateQuestions(resource);
+                            handleOpenGenerateModal(resource);
                           }}
                           disabled={generatingQuestions === resource.id}
                           className="p-2 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
@@ -385,6 +372,34 @@ function SkillItem() {
             isSaving={isSaving}
           />
         )}
+
+        <ConfirmModal
+          isOpen={confirmGenerateModal.isOpen}
+          title="Tạo câu hỏi tự động"
+          message={
+            <div className="space-y-3">
+              <p>
+                Bạn có muốn tự động tạo câu hỏi trắc nghiệm từ tài liệu{" "}
+                <strong>&quot;{confirmGenerateModal.resource?.title}&quot;</strong> không?
+              </p>
+              <p className="text-sm text-gray-500">Hệ thống sẽ sử dụng AI để:</p>
+              <ul className="text-sm text-gray-500 list-disc list-inside space-y-1">
+                <li>Phân tích chủ đề từ tên tài liệu</li>
+                <li>Tạo các chương học tập</li>
+                <li>Tạo bài tập trắc nghiệm cho mỗi chương</li>
+                <li>Tạo bài tập tổng kết</li>
+              </ul>
+              <p className="text-sm text-amber-600 font-medium">
+                Quá trình này có thể mất 1-2 phút.
+              </p>
+            </div>
+          }
+          confirmText="Tạo câu hỏi"
+          cancelText="Hủy"
+          confirmButtonClass="bg-purple-600 hover:bg-purple-700"
+          onConfirm={handleConfirmGenerateQuestions}
+          onCancel={handleCloseGenerateModal}
+        />
       </div>
     </div>
   );

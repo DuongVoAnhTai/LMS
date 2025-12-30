@@ -100,8 +100,12 @@ export const updateConversation = async (
     });
     return res; // { success: true, conversation: {...} }
   } catch (error: any) {
+    console.error("Update conversation error:", error);
     if (error.response?.data?.error) {
       return { error: error.response.data.error };
+    }
+    if (error.message) {
+      return { error: error.message };
     }
     return { error: "Failed to update conversation" };
   }
