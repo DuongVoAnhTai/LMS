@@ -112,14 +112,14 @@ function DashboardComponentTeacher() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <SummaryCard
           title="Tổng số kỹ năng"
-          value={summary?.skillsInProgressCount?.toString() || "0"}
+          value={summary?.totalSkillsCount?.toString() || "0"}
           icon={<BookOpen size={28} className="text-white" />}
           gradient="from-blue-500 to-blue-600"
           subtitle="Đang được theo dõi"
         />
         <SummaryCard
           title="Lượt hoàn thành"
-          value={summary?.totalCompletedCount?.toString() || "0"}
+          value={summary?.totalCompletedSubmissions?.toString() || "0"}
           icon={<CheckCircle size={28} className="text-white" />}
           gradient="from-green-500 to-green-600"
           subtitle="Tổng số bài sinh viên đã hoàn thành"
